@@ -6,4 +6,7 @@ dist
 .git
 .vscode
 npm-debug.log
+*.log
 docker-compose.yml
+Dockerfile
+*.tsbuildinfo

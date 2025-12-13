@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: munchspace
+  IMAGE_NAME: munchspace-api
 
 jobs:
   build:
@@ -26,18 +26,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: api/v1/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: api/v1
         run: npm ci
 
       - name: Lint
-        working-directory: api/v1
         run: npm run lint
 
       - name: Test
-        working-directory: api/v1
         run: npm test
 
       - name: Log in to GitHub Container Registry
@@ -50,6 +47,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./api/v1
+          context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
