@@ -29,15 +29,12 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: .
         run: npm ci
 
       - name: Lint
-        working-directory: .
         run: npm run lint
 
       - name: Test
-        working-directory: .
         run: npm test
 
       - name: Log in to GitHub Container Registry
