@@ -51,6 +51,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./api/v1
-          file: ./api/v1/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
