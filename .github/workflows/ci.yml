@@ -29,15 +29,15 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: .
+        working-directory: api/v1
         run: npm ci
 
       - name: Lint
-        working-directory: .
+        working-directory: api/v1
         run: npm run lint
 
       - name: Test
-        working-directory: .
+        working-directory: api/v1
         run: npm test
 
       - name: Log in to GitHub Container Registry
@@ -50,7 +50,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./api/v1
+          file: ./api/v1/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
