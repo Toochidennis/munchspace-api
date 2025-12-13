@@ -29,12 +29,15 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        working-directory: munchspace
         run: npm ci
 
       - name: Lint
+        working-directory: munchspace
         run: npm run lint
 
       - name: Test
+        working-directory: munchspace
         run: npm test
 
       - name: Log in to GitHub Container Registry
