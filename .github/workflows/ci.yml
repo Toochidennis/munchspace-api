@@ -49,4 +49,6 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
           tags: ${{ env.REGISTRY }}/toochidennis/${{ env.IMAGE_NAME }}:${{ github.sha }}
