@@ -13,6 +13,8 @@ RUN npm ci
 FROM deps AS build
 COPY . .
 RUN npm run build
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
 # ----- Runtime Stage -----
