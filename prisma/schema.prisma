@@ -20,7 +20,6 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders    Order[]
 }
 
 enum Role {
@@ -30,40 +29,154 @@ enum Role {
   RIDER
 }
 
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String   @unique
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Admin {
+  id         String   @id @default(cuid())
+  first_name String
+  last_name  String
+  email      String   @unique
+  phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Rider {
+  id        String   @id @default(cuid())
+  first_name String
+  last_name  String
+  email     String   @unique
+  phone     String   @unique
+  license_number String @unique
+  vehicle_type  String
+  vehicle_number String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  kycs Kyc[]
+}
+
 model Restaurant {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
+  id          String       @id @default(cuid())
+  first_name  String
+  last_name   String
+  description String
   address     String
-  menus       Menu[]
+  phone       String       @unique
+  email       String       @unique
+  storeDetail StoreDetail?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model StoreDetail {
+  id                String             @id @default(cuid())
+  restaurantId      String             @unique
+  storeName         String
+  storeEmail        String
+  storePhone        String
+  establishmentDate DateTime
+  storeDescription  String
+  storeType         StoreType?
+  workingHours      WorkingHour[]
+  serviceOperations ServiceOperation[]
+  menus             Menu[]
+  orders            Order[]
+  kycs              Kyc[]
+  country           String
+  state             String
+  lga               String
+  city              String
+  street            String
+  storeAddress      String
+  openingDate       DateTime
+  cuisineType       String
+  rating            Float              @default(0.0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+}
+
+model StoreType {
+  id          String   @id @default(cuid())
+  storeId     String   @unique
+  typeName    String
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  orders      Order[]
+
+  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+}
+
+model ServiceOperation {
+  id          String      @id @default(cuid())
+  storeId     String
+  serviceName String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+}
+
+model WorkingHour {
+  id        String   @id @default(cuid())
+  storeId   String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+}
+
+model Kyc {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  riderId        String   @unique
+  documentType   String
+  documentNumber String
+  issuedDate     DateTime
+  expiryDate     DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  storeDetail StoreDetail @relation(fields: [userId], references: [id])
+  rider       Rider       @relation(fields: [riderId], references: [id])
 }
 
 model Menu {
-  id           String   @id @default(cuid())
-  restaurantId String
-  name         String
-  description  String?
-  price        Float
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  description String?
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
 }
 
 model Order {
-  id           String      @id @default(cuid())
-  userId       String
-  restaurantId String
-  total        Float
-  status       OrderStatus @default(CREATED)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  customerId String
+  storeId    String
+  total      Float
+  status     OrderStatus @default(CREATED)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
-  user       User       @relation(fields: [userId], references: [id])
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
 }
 
 enum OrderStatus {
