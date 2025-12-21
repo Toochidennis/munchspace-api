@@ -6,9 +6,13 @@ import { PrismaModule } from './shared/infra/prisma/prisma.module';
 import { AuthModule } from './shared/auth/auth.module';
 import { CustomerModule } from './customer/customer.module';
 import { RestaurantModule } from './restaurant/restaurant.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     IdentityModule,
     PrismaModule,
     AuthModule,
