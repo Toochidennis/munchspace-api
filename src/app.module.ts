@@ -3,10 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './shared/infra/prisma/prisma.module';
 import { AuthModule } from './shared/auth/auth.module';
-import { CustomerController } from './customer/customer.controller';
 import { CustomerModule } from './customer/customer.module';
 import { RestaurantModule } from './restaurant/restaurant.module';
-import { AuthController } from './shared/auth/auth.controller';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -26,12 +24,12 @@ import { ResponseInterceptor } from './shared/interceptor/response-interceptor.i
     RestaurantModule,
     ThrottlerModule.forRoot([
       {
-        ttl: 60,
+        ttl: 60000,
         limit: 10,
       },
     ]),
   ],
-  controllers: [AppController, AuthController, CustomerController],
+  controllers: [AppController],
   providers: [
     AppService,
     {

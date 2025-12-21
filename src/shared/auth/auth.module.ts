@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenUtil } from './token.util';
+import { OtpModule } from '../infra/otp/otp.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TokenUtil } from './token.util';
       }),
       inject: [ConfigService],
     }),
+    OtpModule,
   ],
   providers: [AuthService, JwtStrategy, TokenUtil],
   controllers: [AuthController],

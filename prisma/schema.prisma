@@ -15,7 +15,6 @@ datasource db {
 
 model User {
   id       String   @id @default(cuid())
-  name     String
   email    String   @unique
   phone    String   @unique
   password String?
@@ -54,7 +53,6 @@ model Otp {
   id        String   @id @default(cuid())
   userId    String
   otpHash   String
-  code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
 

@@ -12,16 +12,32 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     config: ConfigService,
     private readonly authService: AuthService,
   ) {
+    const secret = config.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const user = await this.authService.validateUserById(payload.sub);
     if (!user) {
-      throw UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account inactive');
+    }
+
+    if (user.isBlocked) {
+      throw new UnauthorizedException('Account blocked!');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Account is not verified');
     }
 
     return {
