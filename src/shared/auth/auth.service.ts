@@ -4,7 +4,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/shared/infra/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from './token.util';
 import { addMinutes, isAfter } from 'date-fns';
@@ -21,7 +20,10 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (!user.password) throw new UnauthorizedException('No password set');
-    
+
+    if (!user.isActive) throw new UnauthorizedException('User is not active');
+    if (user.isBlocked) throw new UnauthorizedException('User is blocked');
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) throw new UnauthorizedException('Invalid credentials');
     return user;
@@ -30,6 +32,12 @@ export class AuthService {
   async loginWithPassword(email: string, password: string) {
     const user = await this.validatePasswordLogin(email, password);
     return {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+      },
       accessToken: this.tokenUtil.generateAccessToken(user),
       refreshToken: this.tokenUtil.generateRefreshToken(user),
     };

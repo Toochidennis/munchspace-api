@@ -15,6 +15,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './shared/filters/all-exceptions-filter.filter';
 import { ApiKeyGuard } from './shared/auth/guards/api-key.guard';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './shared/interceptor/response-interceptor.interceptor';
 
 @Module({
   imports: [
@@ -47,6 +49,10 @@ import { ApiKeyGuard } from './shared/auth/guards/api-key.guard';
         forbidNonWhitelisted: true,
         transform: true,
       }),
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
     },
     {
       provide: APP_FILTER,
