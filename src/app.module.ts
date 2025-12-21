@@ -14,6 +14,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './shared/filters/all-exceptions-filter.filter';
+import { ApiKeyGuard } from './shared/auth/guards/api-key.guard';
 
 @Module({
   imports: [
@@ -31,6 +32,10 @@ import { AllExceptionsFilter } from './shared/filters/all-exceptions-filter.filt
   controllers: [AppController, AuthController, CustomerController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
