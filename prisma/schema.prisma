@@ -16,17 +16,37 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String
-  role      Role     @default(USER)
+  phone     String   @unique
+  password  String?
+  role      Role     @default(CUSTOMER)
+  authType  AuthType @default(PASSWORD)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  otps Otp[]
+}
+
+enum AuthType {
+  PASSWORD
+  OTP
 }
 
 enum Role {
-  USER
+  CUSTOMER
   ADMIN
   RESTAURANT
   RIDER
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String
+  otpHash   String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Customer {
@@ -50,16 +70,16 @@ model Admin {
 }
 
 model Rider {
-  id        String   @id @default(cuid())
-  first_name String
-  last_name  String
-  email     String   @unique
-  phone     String   @unique
-  license_number String @unique
-  vehicle_type  String
-  vehicle_number String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  first_name     String
+  last_name      String
+  email          String   @unique
+  phone          String   @unique
+  license_number String   @unique
+  vehicle_type   String
+  vehicle_number String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   kycs Kyc[]
 }
