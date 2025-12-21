@@ -1,11 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  LoginDto,
-  SendOtpDto,
-  VerifyOtpDto,
-  CustomerSignupDto,
-} from './dto';
+import { LoginDto, SendOtpDto, VerifyOtpDto, CustomerSignupDto } from './dto';
+import { Throttle } from '@nestjs/throttler';
+import { ApiKeyGuard } from './guards/api-key.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -30,11 +27,15 @@ export class AuthController {
     return this.auth.sendOtp(dto.phone);
   }
 
+  @UseGuards(ApiKeyGuard)
+  @Throttle({ limit: 3, ttl: 60 })
   @Post('customer/send-otp')
   sendCustomerOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.phone);
   }
 
+  @UseGuards(ApiKeyGuard)
+  @Throttle({ limit: 5, ttl: 300 })
   @Post('customer/verify-otp')
   verifyCustomerOtp(@Body() dto: VerifyOtpDto) {
     return this.auth.verifyOtp(dto.phone, dto.otp);
