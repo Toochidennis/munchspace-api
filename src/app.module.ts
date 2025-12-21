@@ -24,7 +24,7 @@ import { ApiKeyGuard } from './shared/auth/guards/api-key.guard';
     RestaurantModule,
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
+        ttl: 60,
         limit: 10,
       },
     ]),

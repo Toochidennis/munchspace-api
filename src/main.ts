@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import fastifyCompress from '@fastify/compress';
 
 import {
   NestFastifyApplication,
@@ -15,6 +16,13 @@ async function bootstrap() {
   );
 
   await app.register(fastifyHelmet, { global: true });
+  await app.register(fastifyCompress);
+
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'X-API-KEY', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('MunchSpace API')
