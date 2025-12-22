@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: base
     container_name: munchspace-api
     restart: unless-stopped
     environment:
@@ -17,9 +18,18 @@ services:
         condition: service_started
     volumes:
       - .:/app
-      - node_modules:/app/node_modules
-    command: >
-      sh -c "npm install && npx prisma migrate deploy && npm run start:dev"
+      - /app/node_modules
+    command: sh -c "npm install && npx prisma generate && npx prisma migrate deploy && npm run start:dev"
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./prisma
+          target: /app/prisma
+        - action: rebuild
+          path: package.json
 
 
   postgres:
@@ -60,4 +70,3 @@ services:
 
 volumes:
   pg_data:
-  node_modules:

@@ -3,7 +3,7 @@ import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { PrismaModule } from '@/shared/infra/prisma/prisma.module';
 import { AuthModule } from '@/shared/auth/auth.module';
-import { CustomerModule } from '@/customer/customer.module';
+import { CustomerModule } from '@/modules/customer/customer.module';
 import { RestaurantModule } from '@/restaurant/restaurant.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';

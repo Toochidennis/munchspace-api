@@ -12,7 +12,7 @@ export class AuthController {
     return this.auth.loginWithPassword(dto.email, dto.password);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('customer/send-otp')
   sendCustomerOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.phone);

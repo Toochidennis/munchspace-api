@@ -23,7 +23,7 @@ export class ApiKeyGuard implements CanActivate {
     const validKeys = this.configService.get<string>('API_KEYS')?.split(',');
 
     if (!validKeys || !validKeys.includes(apiKey)) {
-      throw new UnauthorizedException('Invalid API key');
+      throw new UnauthorizedException(`Invalid API key ${apiKey}`);
     }
 
     return true;
