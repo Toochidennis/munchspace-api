@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
+import { AuthService } from '@/shared/auth/auth.service';
+import { AuthController } from '@/shared/auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { TokenUtil } from './token.util';
-import { OtpModule } from '../infra/otp/otp.module';
+import { JwtStrategy } from '@/shared/auth/strategies/jwt.strategy';
+import { TokenUtil } from '@/shared/auth/token.util';
+import { OtpModule } from '@/shared/infra/otp/otp.module';
 
 @Module({
   imports: [

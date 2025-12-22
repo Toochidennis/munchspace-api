@@ -5,12 +5,12 @@ import { addMinutes, isAfter } from 'date-fns';
 
 @Injectable()
 export class OtpStore {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async save(userId: string, otp: string, ttlMinutes = 5) {
     const otpHash = await bcrypt.hash(otp, 10);
 
-    return this.prisma.otp.create({
+    return this.prisma.client.otp.create({
       data: {
         userId,
         otpHash,
@@ -20,7 +20,7 @@ export class OtpStore {
   }
 
   async verify(userId: string, plainOtp: string): Promise<boolean> {
-    const otpRecord = await this.prisma.otp.findFirst({
+    const otpRecord = await this.prisma.client.otp.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
@@ -32,6 +32,6 @@ export class OtpStore {
   }
 
   async clear(userId: string) {
-    await this.prisma.otp.deleteMany({ where: { userId } });
+    await this.prisma.client.otp.deleteMany({ where: { userId } });
   }
 }

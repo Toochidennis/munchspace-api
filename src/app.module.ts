@@ -1,20 +1,21 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { PrismaModule } from './shared/infra/prisma/prisma.module';
-import { AuthModule } from './shared/auth/auth.module';
-import { CustomerModule } from './customer/customer.module';
-import { RestaurantModule } from './restaurant/restaurant.module';
+import { AppController } from '@/app.controller';
+import { AppService } from '@/app.service';
+import { PrismaModule } from '@/shared/infra/prisma/prisma.module';
+import { AuthModule } from '@/shared/auth/auth.module';
+import { CustomerModule } from '@/customer/customer.module';
+import { RestaurantModule } from '@/restaurant/restaurant.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { AllExceptionsFilter } from './shared/filters/all-exceptions-filter.filter';
-import { ApiKeyGuard } from './shared/auth/guards/api-key.guard';
+import { AllExceptionsFilter } from '@/shared/filters/all-exceptions-filter.filter';
+import { ApiKeyGuard } from '@/shared/auth/guards/api-key.guard';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ResponseInterceptor } from './shared/interceptor/response-interceptor.interceptor';
+import { ResponseInterceptor } from '@/shared/interceptor/response-interceptor.interceptor';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -28,6 +29,15 @@ import { ResponseInterceptor } from './shared/interceptor/response-interceptor.i
         limit: 10,
       },
     ]),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: (env) => {
+        if (!env.JWT_SECRET) {
+          throw new Error('JWT_SECRET is not defined in environment variables');
+        }
+        return env;
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [

@@ -1,12 +1,8 @@
-version: "3.9"
-
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/munchspace
     container_name: munchspace-api
     restart: unless-stopped
     environment:
@@ -21,8 +17,9 @@ services:
         condition: service_started
     volumes:
       - .:/app
-      - /app/node_modules
-    command: npm run start:dev
+      - node_modules:/app/node_modules
+    command: >
+      sh -c "npm install && npx prisma migrate deploy && npm run start:dev"
 
 
   postgres:
@@ -51,15 +48,16 @@ services:
     ports:
       - "6379:6379"
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: munchspace-otel-collector
-    command: ["--config=/etc/otelcol/otel-collector.yaml"]
-    volumes:
-      - ./docker/otel/otel-collector.yaml:/etc/otelcol/otel-collector.yaml
-    ports:
-      - "4317:4317"
-      - "4318:4318"
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib:latest
+  #   container_name: munchspace-otel-collector
+  #   command: ["--config=/etc/otelcol/otel-collector.yaml"]
+  #   volumes:
+  #     - ./docker/otel/otel-collector.yaml:/etc/otelcol/otel-collector.yaml
+  #   ports:
+  #     - "4317:4317"
+  #     - "4318:4318"
 
 volumes:
   pg_data:
+  node_modules:

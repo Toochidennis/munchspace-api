@@ -3,10 +3,10 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/shared/infra/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from './token.util';
 import { OtpService } from '../infra/otp/otp.service';
+import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +17,7 @@ export class AuthService {
   ) {}
 
   async validatePasswordLogin(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.client.user.findUnique({ where: { email } });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (!user.password) throw new UnauthorizedException('No password set');
@@ -36,13 +36,13 @@ export class AuthService {
         role: user.role,
         phone: user.phone,
       },
-      accessToken: this.tokenUtil.generateAccessToken(user),
-      refreshToken: this.tokenUtil.generateRefreshToken(user),
+      accessToken: this.tokenUtil.generateAccessToken(user.id, user.role),
+      refreshToken: this.tokenUtil.generateRefreshToken(user.id, user.role),
     };
   }
 
   async sendOtp(phone: string) {
-    const user = await this.prisma.user.findUnique({ where: { phone } });
+    const user = await this.prisma.client.user.findUnique({ where: { phone } });
     if (!user) throw new BadRequestException('User not found');
 
     await this.otpService.send(user.id, phone);
@@ -51,19 +51,19 @@ export class AuthService {
   }
 
   async verifyOtp(phone: string, plainOtp: string) {
-    const user = await this.prisma.user.findUnique({ where: { phone } });
+    const user = await this.prisma.client.user.findUnique({ where: { phone } });
     if (!user) throw new BadRequestException('User not found');
 
     await this.otpService.verify(user.id, plainOtp);
 
     return {
       user,
-      accessToken: this.tokenUtil.generateAccessToken(user),
-      refreshToken: this.tokenUtil.generateRefreshToken(user),
+      accessToken: this.tokenUtil.generateAccessToken(user.id, user.role),
+      refreshToken: this.tokenUtil.generateRefreshToken(user.id, user.role),
     };
   }
 
   async validateUserById(userId: string) {
-    return await this.prisma.user.findUnique({ where: { id: userId } });
+    return await this.prisma.client.user.findUnique({ where: { id: userId } });
   }
 }

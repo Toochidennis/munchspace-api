@@ -1,3 +1,3 @@
-export interface OtpSender {
-  sendOtp(destination: string, message: string): Promise<void>;
+export abstract class OtpSender {
+  abstract sendOtp(destination: string, message: string): Promise<void>;
 }

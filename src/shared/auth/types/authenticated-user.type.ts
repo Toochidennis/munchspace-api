@@ -1,4 +1,4 @@
-import { Role, AuthType } from '../../../../generated/prisma/client';
+import { Role, AuthType } from '@prisma/client';
 
 export interface AuthenticatedUser {
   userId: string;

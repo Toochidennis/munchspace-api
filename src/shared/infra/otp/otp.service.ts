@@ -1,12 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { OtpGenerator } from './otp.generator';
-import type { OtpSender } from './otp.sender';
-import { OtpStore } from './otp.store';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { OtpGenerator } from '@/shared/infra/otp/otp.generator';
+import { OtpSender } from '@/shared/infra/otp/otp.sender';
+import { OtpStore } from '@/shared/infra/otp/otp.store';
+import { OTP_SENDER } from '@/shared/infra/otp/otp.tokens';
 
 @Injectable()
 export class OtpService {
   constructor(
-    private readonly otpSender: OtpSender,
+    @Inject(OTP_SENDER) private readonly otpSender: OtpSender,
     private readonly otpStore: OtpStore,
   ) {}
 

@@ -5,11 +5,11 @@ import { JwtService } from '@nestjs/jwt';
 export class TokenUtil {
   constructor(private readonly jwtService: JwtService) {}
 
-  generateAccessToken(user: any): string {
-    return this.jwtService.sign({ sub: user.id, role: user.role });
+  generateAccessToken(userId: string, role: string): string {
+    return this.jwtService.sign({ sub: userId, role });
   }
 
-  generateRefreshToken(user: any): string {
-    return this.jwtService.sign({ sub: user.id }, { expiresIn: '7d' });
+  generateRefreshToken(userId: string, role: string): string {
+    return this.jwtService.sign({ sub: userId, role }, { expiresIn: '7d' });
   }
 }
