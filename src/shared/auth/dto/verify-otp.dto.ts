@@ -1,8 +1,12 @@
-import { IsPhoneNumber, IsString } from 'class-validator';
+import { IsEmailOrPhone } from '@/shared/validators/is-email-or-phone.validator';
+import { IsNotEmpty, Validate, IsString } from 'class-validator';
 
 export class VerifyOtpDto {
-  @IsPhoneNumber('NG')
-  phone: string;
+  @Validate(IsEmailOrPhone)
+  @IsNotEmpty()
+  identifier: string;
+
   @IsString()
+  @IsNotEmpty()
   otp: string;
 }

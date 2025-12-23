@@ -2,6 +2,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { LoginDto, SendOtpDto, VerifyOtpDto } from './dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
+import { RefreshDto } from './dto/refresh.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -14,13 +15,18 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('send-otp')
-  sendCustomerOtp(@Body() dto: SendOtpDto) {
-    return this.auth.sendOtp(dto.phone);
+  sendOtp(@Body() dto: SendOtpDto) {
+    return this.auth.sendOtp(dto.identifier);
   }
 
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-otp')
-  verifyCustomerOtp(@Body() dto: VerifyOtpDto) {
-    return this.auth.verifyOtp(dto.phone, dto.otp);
+  verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.auth.verifyOtp(dto.identifier, dto.otp);
+  }
+
+  @Post('refresh')
+  refreshTokens(@Body('refreshToken') dto: RefreshDto) {
+    return this.auth.refreshTokens(dto.userId, dto.role);
   }
 }

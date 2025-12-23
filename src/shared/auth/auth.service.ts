@@ -36,7 +36,7 @@ export class AuthService {
       return { next: 'otp_sent' };
     }
 
-    return this.issueTokens(user.id, user.role);
+    return this._issueTokens(user.id, user.role);
   }
 
   async sendOtp(identifier: string) {
@@ -51,7 +51,7 @@ export class AuthService {
       await this.otpService.send(user.id, identifier);
     }
 
-    return { message: 'OTP sent' };
+    return { message: 'otp_sent' };
   }
 
   async verifyOtp(identifier: string, otp: string) {
@@ -60,7 +60,11 @@ export class AuthService {
 
     await this.otpService.verify(user.id, otp);
 
-    return this.issueTokens(user.id, user.role);
+    return this._issueTokens(user.id, user.role);
+  }
+
+  refreshTokens(userId: string, role: string) {
+    return this._issueTokens(userId, role);
   }
 
   async validateUserById(userId: string) {
@@ -75,7 +79,7 @@ export class AuthService {
     });
   }
 
-  issueTokens(userId: string, role: string) {
+  _issueTokens(userId: string, role: string) {
     return {
       accessToken: this.tokenUtil.generateAccessToken(userId, role),
       refreshToken: this.tokenUtil.generateRefreshToken(userId, role),

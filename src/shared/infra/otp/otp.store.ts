@@ -17,8 +17,13 @@ export class OtpStore {
     const otpHash = await bcrypt.hash(otp, 10);
     const prismaClient = tsx || this.prisma.client;
 
-    return prismaClient.otp.create({
-      data: {
+    return prismaClient.otp.upsert({
+      where: { userId },
+      update: {
+        otpHash,
+        expiresAt: addMinutes(new Date(), ttlMinutes),
+      },
+      create: {
         userId,
         otpHash,
         expiresAt: addMinutes(new Date(), ttlMinutes),

@@ -17,7 +17,7 @@ export class CreateCustomerDto {
   @IsNotEmpty()
   email: string;
 
-  @IsPhoneNumber('NG')
+  @IsPhoneNumber()
   @IsNotEmpty()
   phone: string;
 
