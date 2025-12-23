@@ -3,6 +3,7 @@ import { OtpGenerator } from '@/shared/infra/otp/otp.generator';
 import { OtpSender } from '@/shared/infra/otp/otp.sender';
 import { OtpStore } from '@/shared/infra/otp/otp.store';
 import { OTP_SENDER } from '@/shared/infra/otp/otp.tokens';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OtpService {
@@ -11,10 +12,14 @@ export class OtpService {
     private readonly otpStore: OtpStore,
   ) {}
 
-  async send(userId: string, destination: string): Promise<void> {
+  async send(
+    userId: string,
+    destination: string,
+    tsx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const otp = OtpGenerator.generate();
 
-    await this.otpStore.save(userId, otp);
+    await this.otpStore.save(userId, otp, 5, tsx);
 
     const message = `Your verification code is: ${otp}. It will expire in 5 minutes.`;
 

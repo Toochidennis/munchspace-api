@@ -2,15 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { addMinutes, isAfter } from 'date-fns';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OtpStore {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(userId: string, otp: string, ttlMinutes = 5) {
+  async save(
+    userId: string,
+    otp: string,
+    ttlMinutes = 5,
+    tsx?: Prisma.TransactionClient,
+  ) {
     const otpHash = await bcrypt.hash(otp, 10);
+    const prismaClient = tsx || this.prisma.client;
 
-    return this.prisma.client.otp.create({
+    return prismaClient.otp.create({
       data: {
         userId,
         otpHash,

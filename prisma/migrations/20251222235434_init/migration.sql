@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "AuthType" AS ENUM ('PASSWORD', 'OTP');
+CREATE TYPE "AuthMethod" AS ENUM ('PASSWORD', 'SMS_OTP', 'EMAIL_OTP');
 
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'ADMIN', 'RESTAURANT', 'RIDER');
@@ -12,9 +12,9 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
-    "password" TEXT,
     "role" "Role" NOT NULL DEFAULT 'CUSTOMER',
-    "authType" "AuthType" NOT NULL DEFAULT 'PASSWORD',
+    "authMethods" "AuthMethod"[],
+    "passwordHash" TEXT,
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "verifiedAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -42,6 +42,7 @@ CREATE TABLE "Otp" (
 -- CreateTable
 CREATE TABLE "Customer" (
     "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
@@ -204,6 +205,12 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Otp_userId_key" ON "Otp"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_userId_key" ON "Customer"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
 
 -- CreateIndex
@@ -244,6 +251,9 @@ CREATE UNIQUE INDEX "Kyc_riderId_key" ON "Kyc"("riderId");
 
 -- AddForeignKey
 ALTER TABLE "Otp" ADD CONSTRAINT "Otp_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Customer" ADD CONSTRAINT "Customer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "StoreDetail" ADD CONSTRAINT "StoreDetail_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

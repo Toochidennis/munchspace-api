@@ -18,9 +18,9 @@ model User {
   id       String   @id @default(cuid())
   email    String   @unique
   phone    String   @unique
-  password String?
   role     Role     @default(CUSTOMER)
-  authType AuthType @default(PASSWORD)
+  authMethods AuthMethod[]
+  passwordHash String?
 
   isVerified Boolean   @default(false)
   verifiedAt DateTime?
@@ -35,12 +35,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  otps Otp[]
+  otp Otp?
+  customer Customer?
 }
 
-enum AuthType {
+enum AuthMethod {
   PASSWORD
-  OTP
+  SMS_OTP
+  EMAIL_OTP
 }
 
 enum Role {
@@ -52,7 +54,7 @@ enum Role {
 
 model Otp {
   id        String   @id @default(cuid())
-  userId    String
+  userId    String @unique
   otpHash   String
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -62,12 +64,15 @@ model Otp {
 
 model Customer {
   id        String   @id @default(cuid())
+  userId    String   @unique
   name      String
   email     String   @unique
   phone     String   @unique
   orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Admin {

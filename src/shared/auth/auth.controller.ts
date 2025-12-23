@@ -9,17 +9,17 @@ export class AuthController {
 
   @Post('login')
   login(@Body() dto: LoginDto) {
-    return this.auth.loginWithPassword(dto.email, dto.password);
+    return this.auth.login(dto.email, dto.password);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @Post('customer/send-otp')
+  @Post('send-otp')
   sendCustomerOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.phone);
   }
 
   @Throttle({ default: { limit: 5, ttl: 300000 } })
-  @Post('customer/verify-otp')
+  @Post('verify-otp')
   verifyCustomerOtp(@Body() dto: VerifyOtpDto) {
     return this.auth.verifyOtp(dto.phone, dto.otp);
   }

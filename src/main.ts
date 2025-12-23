@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import fastifyCompress from '@fastify/compress';
-import type { FastifyRequest, FastifyReply } from 'fastify';
+//import type { FastifyRequest, FastifyReply } from 'fastify';
 
 import {
   NestFastifyApplication,
@@ -16,17 +16,17 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true }),
   );
 
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
-      void reply.status(404).send({
-        success: false,
-        statusCode: 404,
-        error: 'Not Found',
-        message: `Cannot ${request.method} ${request.url}`,
-      });
-    });
+  // app
+  //   .getHttpAdapter()
+  //   .getInstance()
+  //   .setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
+  //     void reply.status(404).send({
+  //       success: false,
+  //       statusCode: 404,
+  //       error: 'Not Found',
+  //       message: `Cannot ${request.method} ${request.url}`,
+  //     });
+  //   });
 
   await app.register(fastifyHelmet, { global: true });
   await app.register(fastifyCompress);

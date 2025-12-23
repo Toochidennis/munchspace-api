@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from './token.util';
 import { OtpService } from '../infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
+import { AuthMethod } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -20,50 +21,64 @@ export class AuthService {
     const user = await this.prisma.client.user.findUnique({ where: { email } });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    if (!user.password) throw new UnauthorizedException('No password set');
+    if (!user.passwordHash) throw new UnauthorizedException('No password set');
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) throw new UnauthorizedException('Invalid credentials');
     return user;
   }
 
-  async loginWithPassword(email: string, password: string) {
+  async login(email: string, password: string) {
     const user = await this.validatePasswordLogin(email, password);
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-      },
-      accessToken: this.tokenUtil.generateAccessToken(user.id, user.role),
-      refreshToken: this.tokenUtil.generateRefreshToken(user.id, user.role),
-    };
+
+    if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
+      await this.otpService.send(user.id, user.email);
+      return { next: 'otp_sent' };
+    }
+
+    return this.issueTokens(user.id, user.role);
   }
 
-  async sendOtp(phone: string) {
-    const user = await this.prisma.client.user.findUnique({ where: { phone } });
+  async sendOtp(identifier: string) {
+    const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
 
-    await this.otpService.send(user.id, phone);
+    if (user.authMethods.includes(AuthMethod.SMS_OTP)) {
+      await this.otpService.send(user.id, identifier);
+    }
+
+    if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
+      await this.otpService.send(user.id, identifier);
+    }
 
     return { message: 'OTP sent' };
   }
 
-  async verifyOtp(phone: string, plainOtp: string) {
-    const user = await this.prisma.client.user.findUnique({ where: { phone } });
+  async verifyOtp(identifier: string, otp: string) {
+    const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
 
-    await this.otpService.verify(user.id, plainOtp);
+    await this.otpService.verify(user.id, otp);
 
-    return {
-      user,
-      accessToken: this.tokenUtil.generateAccessToken(user.id, user.role),
-      refreshToken: this.tokenUtil.generateRefreshToken(user.id, user.role),
-    };
+    return this.issueTokens(user.id, user.role);
   }
 
   async validateUserById(userId: string) {
     return await this.prisma.client.user.findUnique({ where: { id: userId } });
+  }
+
+  async findUserByEmailOrPhone(identifier: string) {
+    return await this.prisma.client.user.findFirst({
+      where: {
+        OR: [{ email: identifier }, { phone: identifier }],
+      },
+    });
+  }
+
+  issueTokens(userId: string, role: string) {
+    return {
+      accessToken: this.tokenUtil.generateAccessToken(userId, role),
+      refreshToken: this.tokenUtil.generateRefreshToken(userId, role),
+    };
   }
 }
