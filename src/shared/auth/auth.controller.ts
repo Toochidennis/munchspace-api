@@ -1,8 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { LoginDto, SendOtpDto, VerifyOtpDto } from './dto';
 import { Throttle } from '@nestjs/throttler';
-import { AuthService } from './auth.service.js';
-import { RefreshDto } from './dto/refresh.dto';
+import { LoginDto, SendOtpDto, VerifyOtpDto } from '@/shared/auth/dto';
+import { AuthService } from '@/shared/auth/auth.service.js';
+import { RefreshDto } from '@/shared/auth/dto/refresh.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -26,7 +26,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  refreshTokens(@Body('refreshToken') dto: RefreshDto) {
+  refreshTokens(@Body() dto: RefreshDto) {
     return this.auth.refreshTokens(dto.userId, dto.role);
   }
 }
