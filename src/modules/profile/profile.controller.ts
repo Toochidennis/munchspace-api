@@ -8,6 +8,6 @@ export class ProfileController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: AuthenticatedUser & FastifyRequest) {
-    return { req.userId, req.role };
+    return { req };
   }
 }
