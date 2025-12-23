@@ -1,7 +1,7 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto, SendOtpDto, VerifyOtpDto } from '@/shared/auth/dto';
-import { AuthService } from '@/shared/auth/auth.service.js';
+import { AuthService } from '@/shared/auth/auth.service';
 import { RefreshDto } from '@/shared/auth/dto/refresh.dto';
 
 @Controller('auth')

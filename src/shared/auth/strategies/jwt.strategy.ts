@@ -36,9 +36,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Account blocked!');
     }
 
-    if (!user.isVerified) {
-      throw new UnauthorizedException('Account is not verified');
-    }
+    // if (!user.isVerified) {
+    //   throw new UnauthorizedException('Account is not verified');
+    // }
 
     return {
       userId: user.id,
