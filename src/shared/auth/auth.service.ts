@@ -63,8 +63,11 @@ export class AuthService {
     return this._issueTokens(user.id, user.role);
   }
 
-  refreshTokens(userId: string, role: string) {
-    return this._issueTokens(userId, role);
+  async refreshTokens(userId: string) {
+    const user = await this.validateUserById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    return this._issueTokens(user.id, user.role);
   }
 
   async validateUserById(userId: string) {

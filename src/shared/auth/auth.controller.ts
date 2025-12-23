@@ -27,6 +27,6 @@ export class AuthController {
 
   @Post('refresh')
   refreshTokens(@Body() dto: RefreshDto) {
-    return this.auth.refreshTokens(dto.userId, dto.role);
+    return this.auth.refreshTokens(dto.userId);
   }
 }

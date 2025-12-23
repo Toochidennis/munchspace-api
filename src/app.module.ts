@@ -16,6 +16,7 @@ import { ApiKeyGuard } from '@/shared/auth/guards/api-key.guard';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from '@/shared/interceptor/response-interceptor.interceptor';
 import { ConfigModule } from '@nestjs/config';
+import { ProfileModule } from '@/modules/profile/profile.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ConfigModule } from '@nestjs/config';
         return env;
       },
     }),
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [

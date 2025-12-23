@@ -4,8 +4,4 @@ export class RefreshDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  role: string;
 }
