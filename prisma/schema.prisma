@@ -57,17 +57,6 @@ enum PaymentSchedule {
   MONTHLY
 }
 
-enum OrderStatus {
-  CREATED
-  PAID
-  ACCEPTED
-  PREPARING
-  READY
-  DELIVERING
-  COMPLETED
-  CANCELLED
-}
-
 enum OnBoardingStage {
   BASIC
   DOCUMENTS
@@ -153,6 +142,59 @@ enum PriceRange {
   PREMIUM
 }
 
+enum CartStatus {
+  ACTIVE
+  ABANDONED
+  CONVERTED
+}
+
+enum FulfillmentType {
+  DELIVERY
+  PICKUP
+  DINE_IN
+}
+
+enum FulfillmentStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  COMPLETED
+  FAILED
+}
+
+enum OrderStatus {
+  CREATED
+  PAID
+  ACCEPTED
+  PREPARING
+  READY
+  DELIVERING
+  COMPLETED
+  CANCELLED
+}
+
+enum VendorRole {
+  ADMIN
+  MANAGER
+  OWNER
+  STAFF
+}
+
+enum RiderDocumentType {
+  ID_CARD
+  DRIVER_LICENSE
+  VEHICLE_INSURANCE
+  ROAD_WORTHINESS
+}
+
+enum RiderStatus {
+  ONBOARDING
+  VERIFIED
+  ACTIVE
+  SUSPENDED
+  OFFLINE
+}
+
 //  ----- Models ------
 /**
  * Models are the main building blocks of your Prisma schema.
@@ -182,11 +224,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  otp       Otp?
-  customer  Customer?
-  admin     Admin?
-  vendor    Vendor?
-  auditLogs BusinessAuditLog[]
+  otp         Otp?
+  customer    Customer?
+  admin       Admin?
+  vendor      Vendor?
+  auditLogs   BusinessAuditLog[]
+  carts       Cart[]
+  orders      Order[]
+  vendorUsers VendorUser[]
+  rider       Rider?
 }
 
 model Otp {
@@ -225,16 +271,64 @@ model Admin {
 }
 
 model Rider {
-  id            String   @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String   @unique
-  phone         String   @unique
-  licenseNumber String   @unique
-  vehicleType   String
-  vehicleNumber String   @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id     String @id @default(cuid())
+  userId String @unique
+
+  status   RiderStatus @default(ONBOARDING)
+  isActive Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id])
+  vehicle      RiderVehicle[]
+  documents    RiderDocument[]
+  fulfillments Fulfillment[]
+}
+
+model RiderDocument {
+  id      String @id @default(cuid())
+  riderId String
+
+  type            RiderDocumentType
+  fileUrl         String
+  status          ReviewStatus      @default(PENDING)
+  rejectionReason String?
+
+  issuedAt  DateTime?
+  expiresAr DateTime?
+
+  createdAt DateTime @default(now())
+
+  rider Rider @relation(fields: [riderId], references: [id])
+}
+
+model RiderVehicle {
+  id      String @id @default(cuid())
+  riderId String
+
+  vehicleType   VehicleType
+  make          String
+  model         String
+  year          Int
+  plateNumber   String      @unique
+  color         String
+  insuranceInfo String?
+  isActive      Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rider Rider @relation(fields: [riderId], references: [id])
+}
+
+enum VehicleType {
+  BICYCLE
+  MOTORCYCLE
+  SCOOTER
+  CAR
+  VAN
+  TRUCK
 }
 
 model Vendor {
@@ -253,10 +347,11 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user       User             @relation(fields: [userId], references: [id])
-  businesses Business[]
-  financials VendorFinancial?
-  documents  VendorDocument[]
+  user        User             @relation(fields: [userId], references: [id])
+  businesses  Business[]
+  financials  VendorFinancial?
+  documents   VendorDocument[]
+  vendorUsers VendorUser[]
 }
 
 model VendorDocument {
@@ -333,6 +428,8 @@ model Business {
   offerings         BusinessOffering[]
   menuCategories    MenuCategory[]
   menuItems         MenuItem[]
+  carts             Cart[]
+  orders            Order[]
 }
 
 model BusinessOffering {
@@ -406,6 +503,7 @@ model BusinessLocation {
 
   business      Business               @relation(fields: [businessId], references: [id])
   locationHours BusinessAvailability[]
+  orders        Order[]
 }
 
 model BusinessAvailability {
@@ -530,6 +628,7 @@ model MenuItem {
 
   category MenuCategory @relation(fields: [categoryId], references: [id])
   business Business     @relation(fields: [businessId], references: [id])
+  items    CartItem[]
 }
 
 model MenuVariant {
@@ -564,11 +663,132 @@ model MenuAddon {
 
 model Cart {
   id         String @id @default(cuid())
-  userId String
+  userId     String
+  businessId String
 
+  status CartStatus @default(ACTIVE)
+
+  items CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items    CartItem[]
+  user     User     @relation(fields: [userId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model CartItem {
+  id         String @id @default(cuid())
+  cartId     String
+  menuItemId String
+
+  quantity  Int   @default(1)
+  unitPrice Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart     Cart     @relation(fields: [cartId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model Order {
+  id         String  @id @default(cuid())
+  userId     String
+  businessId String
+  locationId String?
+
+  status      OrderStatus
+  totalAmount Float
+  paymentRef  String?
+
+  user         User              @relation(fields: [userId], references: [id])
+  business     Business          @relation(fields: [businessId], references: [id])
+  location     BusinessLocation? @relation(fields: [locationId], references: [id])
+  fulfillments Fulfillment[]
+
+  items    OrderItem[]
+  timeline OrderTimeline[]
+
+  createdAt DateTime @default(now())
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+
+  name      String
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model OrderTimeline {
+  id      String      @id @default(cuid())
+  orderId String
+  status  OrderStatus
+  note    String?
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Fulfillment {
+  id      String          @id @default(cuid())
+  orderId String
+  type    FulfillmentType
+
+  riderId String?
+  status  FulfillmentStatus
+
+  pickupAddress  String?
+  dropoffAddress String?
+
+  order Order  @relation(fields: [orderId], references: [id])
+  rider Rider? @relation(fields: [riderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  description String?
+
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  vendorRolePermissions VendorRolePermission[]
+}
+
+model VendorRolePermission {
+  id           String     @id @default(cuid())
+  role         VendorRole
+  permissionId String
+
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, permissionId])
+}
+
+model VendorUser {
+  id       String     @id @default(cuid())
+  vendorId String
+  userId   String
+  role     VendorRole
+
+  isActive Boolean @default(true)
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vendorId, userId])
 }
