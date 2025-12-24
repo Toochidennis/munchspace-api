@@ -11,6 +11,6 @@ export class TokenUtil {
   }
 
   generateRefreshToken(payload: JwtPayload): string {
-    return this.jwtService.sign(payload, { expiresIn: '7d' });
+    return this.jwtService.sign(payload, { expiresIn: '180d' });
   }
 }

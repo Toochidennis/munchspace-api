@@ -8,6 +8,7 @@ import { TokenUtil } from './token.util';
 import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
+import { JwtPayload } from './types/jwt-payload.type';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,10 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.validatePasswordLogin(email, password);
 
+    if (!user.isActive || user.isBlocked) {
+      throw new UnauthorizedException('Account disabled');
+    }
+
     if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
       await this.otpService.send(user.id, user.email);
       return { next: 'otp_sent' };
@@ -42,6 +47,10 @@ export class AuthService {
   async sendOtp(identifier: string) {
     const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
+
+    if (!user.isActive || user.isBlocked) {
+      throw new UnauthorizedException('Account disabled');
+    }
 
     if (user.authMethods.includes(AuthMethod.SMS_OTP)) {
       await this.otpService.send(user.id, identifier);
@@ -63,16 +72,11 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
-async refreshTokens(payload: JwtPayload) {
-  return {
-    accessToken: this.tokenUtil.generateAccessToken(payload),
-    refreshToken: this.tokenUtil.generateRefreshToken(payload),
-  }
-}
-
-
-  async validateUserById(userId: string) {
-    return await this.prisma.client.user.findUnique({ where: { id: userId } });
+  refreshTokens(payload: JwtPayload) {
+    return {
+      accessToken: this.tokenUtil.generateAccessToken(payload),
+      refreshToken: this.tokenUtil.generateRefreshToken(payload),
+    };
   }
 
   async findUserByEmailOrPhone(identifier: string) {

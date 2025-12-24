@@ -22,7 +22,7 @@ export class AccessJwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-   validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     return {
       userId: payload.sub,
       capabilities: payload.capabilities,
