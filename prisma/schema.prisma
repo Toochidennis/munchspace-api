@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  engineType = "client"
+  provider      = "prisma-client-js"
+  engineType    = "client"
   binaryTargets = ["native", "debian-openssl-1.1.x", "linux-musl", "darwin-arm64"]
 }
 
@@ -14,12 +14,153 @@ datasource db {
   provider = "postgresql"
 }
 
+//  ------------------------------------------------------------
+//  |                     Models & Enums                       |
+//  ------------------------------------------------------------
+
+//  ----- Enums ------
+/**
+ * Enums are special scalar types that can be one of a predefined set of values.
+ * They are useful to represent a fixed set of constants, such as roles, statuses, categories, etc.
+ */
+
+enum AuthMethod {
+  PASSWORD
+  SMS_OTP
+  EMAIL_OTP
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUPER_ADMIN
+  VENDOR
+  VENDOR_STAFF
+  RIDER
+}
+
+enum DocumentType {
+  CAC
+  FOOD_HEALTH_CERTIFICATE
+  TAX_CERTIFICATE
+  FOOD_LICENSE
+  ID_CARD
+  OWNERSHIP_PROOF
+  BANK_STATEMENT
+  OTHER
+}
+
+enum PaymentSchedule {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum OrderStatus {
+  CREATED
+  PAID
+  ACCEPTED
+  PREPARING
+  READY
+  DELIVERING
+  COMPLETED
+  CANCELLED
+}
+
+enum OnBoardingStage {
+  BASIC
+  DOCUMENTS
+  BANK
+  MENU
+  CHARGES
+  LIVE
+}
+
+enum BusinessType {
+  RESTAURANT
+  CAFE
+  BAKERY
+  FOOD_TRUCK
+  BAR
+  LOUNGE
+  CATERING
+  PHARMACY
+  GROCERY
+  FAST_FOOD
+  CASUAL_DINING
+  FINE_DINING
+  BUFFET
+  POP_UP
+}
+
+enum CuisineType {
+  ITALIAN
+  CHINESE
+  INDIAN
+  MEXICAN
+  JAPANESE
+  FRENCH
+  THAI
+  AMERICAN
+  MEDITERRANEAN
+  MIDDLE_EASTERN
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACKS
+  DESSERT
+  BEVERAGES
+}
+
+enum AvailabilityType {
+  OPEN
+  CLOSED
+  HOLIDAY
+}
+
+enum ServiceOperation {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+  CATERING
+  PRE_ORDER
+}
+
+enum BrandType {
+  INDEPENDENT
+  CHAIN
+  FRANCHISE
+}
+
+enum ReviewStatus {
+  ONBOARDING
+  PENDING
+  VERIFIED
+  APPROVED
+  REJECTED
+  SUSPENDED
+  CLOSED
+}
+
+enum PriceRange {
+  LOW
+  MEDIUM
+  HIGH
+  PREMIUM
+}
+
 model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  phone    String   @unique
-  role     Role     @default(CUSTOMER)
-  authMethods AuthMethod[]
+  id           String       @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String       @unique
+  phone        String       @unique
+  role         Role         @default(CUSTOMER)
+  authMethods  AuthMethod[]
   passwordHash String?
 
   isVerified Boolean   @default(false)
@@ -35,26 +176,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  otp Otp?
-  customer Customer?
-}
-
-enum AuthMethod {
-  PASSWORD
-  SMS_OTP
-  EMAIL_OTP
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
-  RESTAURANT
-  RIDER
+  otp       Otp?
+  customer  Customer?
+  admin     Admin?
+  vendor    Vendor?
+  auditLogs BusinessAuditLog[]
 }
 
 model Otp {
   id        String   @id @default(cuid())
-  userId    String @unique
+  userId    String   @unique
   otpHash   String
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -68,7 +199,6 @@ model Customer {
   name      String
   email     String   @unique
   phone     String   @unique
-  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -76,152 +206,275 @@ model Customer {
 }
 
 model Admin {
-  id         String   @id @default(cuid())
-  first_name String
-  last_name  String
-  email      String   @unique
-  phone      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model Rider {
-  id             String   @id @default(cuid())
-  first_name     String
-  last_name      String
-  email          String   @unique
-  phone          String   @unique
-  license_number String   @unique
-  vehicle_type   String
-  vehicle_number String   @unique
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  kycs Kyc[]
-}
-
-model Restaurant {
-  id          String       @id @default(cuid())
-  first_name  String
-  last_name   String
-  description String
-  address     String
-  phone       String       @unique
-  email       String       @unique
-  storeDetail StoreDetail?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
-model StoreDetail {
-  id                String             @id @default(cuid())
-  restaurantId      String             @unique
-  storeName         String
-  storeEmail        String
-  storePhone        String
-  establishmentDate DateTime
-  storeDescription  String
-  storeType         StoreType?
-  workingHours      WorkingHour[]
-  serviceOperations ServiceOperation[]
-  menus             Menu[]
-  orders            Order[]
-  kycs              Kyc[]
-  country           String
-  state             String
-  lga               String
-  city              String
-  street            String
-  storeAddress      String
-  openingDate       DateTime
-  cuisineType       String
-  rating            Float              @default(0.0)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-}
-
-model StoreType {
-  id          String   @id @default(cuid())
-  storeId     String   @unique
-  typeName    String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
-}
-
-model ServiceOperation {
-  id          String      @id @default(cuid())
-  storeId     String
-  serviceName String
-  description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
-}
-
-model WorkingHour {
   id        String   @id @default(cuid())
-  storeId   String
-  dayOfWeek Int
-  openTime  String
-  closeTime String
+  userId    String   @unique
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
-model Kyc {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  riderId        String   @unique
-  documentType   String
-  documentNumber String
-  issuedDate     DateTime
-  expiryDate     DateTime
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  storeDetail StoreDetail @relation(fields: [userId], references: [id])
-  rider       Rider       @relation(fields: [riderId], references: [id])
+model Rider {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String   @unique
+  phone         String   @unique
+  licenseNumber String   @unique
+  vehicleType   String
+  vehicleNumber String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
-model Menu {
-  id          String   @id @default(cuid())
-  storeId     String
-  name        String
-  description String?
-  price       Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Vendor {
+  id     String @id @default(cuid())
+  userId String @unique
 
-  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+  legalName   String
+  displayName String
+  supportEmail       String @unique
+  supportPhone       String @unique
+  address     String
+
+  status          ReviewStatus    @default(ONBOARDING)
+  onBoardingStage OnBoardingStage @default(BASIC)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User             @relation(fields: [userId], references: [id])
+  businesses Business[]
+  financials VendorFinancial?
+  documents  VendorDocument[]
 }
 
-model Order {
-  id         String      @id @default(cuid())
-  customerId String
-  storeId    String
-  total      Float
-  status     OrderStatus @default(CREATED)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+model VendorDocument {
+  id       String @id @default(cuid())
+  vendorId String
 
-  customer    Customer    @relation(fields: [customerId], references: [id])
-  storeDetail StoreDetail @relation(fields: [storeId], references: [id])
+  type            DocumentType
+  fileUrl         String
+  status          ReviewStatus
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
 }
 
-enum OrderStatus {
-  CREATED
-  PAID
-  ACCEPTED
-  PREPARING
-  READY
-  DELIVERING
-  COMPLETED
-  CANCELLED
+model VendorFinancial {
+  id       String @id @default(cuid())
+  vendorId String @unique
+
+  bankName      String
+  accountNumber String
+  accountName   String
+
+  paymentSchedule PaymentSchedule @default(WEEKLY)
+  commissionRate  Float           @default(0.0)
+
+  walletBalance Float @default(0.0)
+  pendingPayout Float @default(0.0)
+  paidToDate    Float @default(0.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
+model Business {
+  id          String  @id @default(cuid())
+  vendorId    String
+  legalName   String
+  displayName String?
+  slug        String  @unique
+
+  email         String   @unique
+  phone         String   @unique
+  establishedAt DateTime
+  description   String
+
+  businessType      BusinessType
+  brandType         BrandType
+  serviceOperations ServiceOperation[]
+
+  registrationNumber String @unique
+  taxId              String @unique
+
+  status          ReviewStatus
+  onBoardingStage OnBoardingStage @default(BASIC)
+
+  isActive   Boolean @default(false)
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor            Vendor                 @relation(fields: [vendorId], references: [id])
+  profile          BusinessProfile?
+  locations         BusinessLocation[]
+  availabilities    BusinessAvailability[]
+  businessSettings  BusinessSetting[]
+  businessCharges   BusinessCharge[]
+  businessAuditLogs BusinessAuditLog[]
+  documents         BusinessDocument[]
+  offerings         BusinessOffering[]
+}
+
+model BusinessOffering {
+  id         String @id @default(cuid())
+  businessId String
+
+  type        BusinessType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessProfile {
+  id         String @id @default(cuid())
+  businessId String @unique
+
+  logoUrl       String?
+  coverImageUrl String?
+  gallery       String[]
+
+  primaryPhone   String
+  secondaryPhone String?
+  supportEmail   String
+
+  websiteUrl   String?
+  instagramUrl String?
+  facebookUrl  String?
+  twitterUrl   String?
+
+  address    String
+  city       String
+  state      String
+  country    String
+  postalCode String?
+  lga        String?
+  streetName String
+
+  averagePrepTime Int        @default(30) // in minutes
+  priceRange      PriceRange @default(MEDIUM)
+
+  rating    Float @default(0.0)
+  rateCount Int   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessLocation {
+  id         String @id @default(cuid())
+  businessId String
+
+  name         String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  country      String
+  postalCode   String?
+
+  latitude  Float
+  longitude Float
+
+  deliveryRadius    Int                @default(5) // in kilometers
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business      Business               @relation(fields: [businessId], references: [id])
+  locationHours BusinessAvailability[]
+}
+
+model BusinessAvailability {
+  id         String @id @default(cuid())
+  businessId String
+  locationId String
+
+  dayOfWeek Int
+
+  availabilityType AvailabilityType
+  openingTime      DateTime
+  closingTime      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business         @relation(fields: [businessId], references: [id])
+  location BusinessLocation @relation(fields: [locationId], references: [id])
+}
+
+model BusinessDocument {
+  id         String @id @default(cuid())
+  businessId String
+
+  documentType    DocumentType
+  documentUrl     String
+  status          ReviewStatus
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessCharge {
+  id         String @id @default(cuid())
+  businessId String
+
+  deliveryFee       Float @default(0.0)
+  serviceChargeRate Float @default(0.0)
+  taxRate           Float @default(0.0)
+
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessSetting {
+  id         String @id @default(cuid())
+  businessId String
+
+  enableOnlineOrdering Boolean @default(true)
+  enableReservations   Boolean @default(false)
+  enableReviews        Boolean @default(true)
+  autoAcceptOrders     Boolean @default(false)
+  allowPreOrders       Boolean @default(true)
+  maxOrderPerDay       Int     @default(100)
+
+  preparationTime Int @default(30) // in minutes
+
+  extraConfig Json?
+
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model BusinessAuditLog {
+  id           String @id @default(cuid())
+  businessId   String
+  ownerId      String
+  changeType   String
+  changeDetail String
+
+  metaData  Json?
+  createdAt DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id])
+  owner    User     @relation(fields: [ownerId], references: [id])
 }
