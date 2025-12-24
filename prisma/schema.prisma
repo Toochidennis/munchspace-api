@@ -153,6 +153,12 @@ enum PriceRange {
   PREMIUM
 }
 
+//  ----- Models ------
+/**
+ * Models are the main building blocks of your Prisma schema.
+ * Each model maps to a table in your database and defines the shape of the data within that table.
+ */
+
 model User {
   id           String       @id @default(cuid())
   firstName    String
@@ -235,11 +241,11 @@ model Vendor {
   id     String @id @default(cuid())
   userId String @unique
 
-  legalName   String
-  displayName String
-  supportEmail       String @unique
-  supportPhone       String @unique
-  address     String
+  legalName    String
+  displayName  String
+  supportEmail String @unique
+  supportPhone String @unique
+  address      String
 
   status          ReviewStatus    @default(ONBOARDING)
   onBoardingStage OnBoardingStage @default(BASIC)
@@ -317,7 +323,7 @@ model Business {
   updatedAt DateTime @updatedAt
 
   vendor            Vendor                 @relation(fields: [vendorId], references: [id])
-  profile          BusinessProfile?
+  profile           BusinessProfile?
   locations         BusinessLocation[]
   availabilities    BusinessAvailability[]
   businessSettings  BusinessSetting[]
@@ -325,13 +331,15 @@ model Business {
   businessAuditLogs BusinessAuditLog[]
   documents         BusinessDocument[]
   offerings         BusinessOffering[]
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
 }
 
 model BusinessOffering {
   id         String @id @default(cuid())
   businessId String
 
-  type        BusinessType
+  type BusinessType
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -391,7 +399,7 @@ model BusinessLocation {
   latitude  Float
   longitude Float
 
-  deliveryRadius    Int                @default(5) // in kilometers
+  deliveryRadius Int @default(5) // in kilometers
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -477,4 +485,79 @@ model BusinessAuditLog {
 
   business Business @relation(fields: [businessId], references: [id])
   owner    User     @relation(fields: [ownerId], references: [id])
+}
+
+model MenuCategory {
+  id         String @id @default(cuid())
+  businessId String
+
+  name        String
+  description String?
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business   @relation(fields: [businessId], references: [id])
+  items    MenuItem[]
+}
+
+model MenuItem {
+  id         String @id @default(cuid())
+  businessId String
+  categoryId String
+
+  name        String
+  description String?
+  imageUrl    String?
+
+  basePrice    Float
+  sellingPrice Float
+  specialPrice Float?
+  isFeatured   Boolean @default(false)
+  isAvailable  Boolean @default(true)
+  isSoldOut    Boolean @default(false)
+
+  quantityInStock Int @default(0)
+
+  variants MenuVariant[]
+  addons   MenuAddon[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category MenuCategory @relation(fields: [categoryId], references: [id])
+  business Business     @relation(fields: [businessId], references: [id])
+}
+
+model MenuVariant {
+  id         String @id @default(cuid())
+  menuItemId String
+
+  name        String
+  description String?
+  price       Float   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model MenuAddon {
+  id         String @id @default(cuid())
+  menuItemId String
+
+  name        String
+  description String?
+  price       Float
+
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 }
