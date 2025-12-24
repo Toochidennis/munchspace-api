@@ -9,7 +9,7 @@ import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 
 @Injectable()
 export class AccountStatusGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context
