@@ -1,8 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { LoginDto, SendOtpDto, VerifyOtpDto } from '@/shared/auth/dto';
-import { AuthService } from '@/shared/auth/auth.service';
-import { RefreshDto } from '@/shared/auth/dto/refresh.dto';
+import { LoginDto, SendOtpDto, VerifyOtpDto } from '@/modules/auth/dto';
+import { AuthService } from '@/modules/auth/auth.service';
+import { RefreshDto } from '@/modules/auth/dto/refresh.dto';
 
 @Controller('auth')
 export class AuthController {

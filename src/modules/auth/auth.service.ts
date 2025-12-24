@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from './token.util';
-import { OtpService } from '../infra/otp/otp.service';
+import { OtpService } from '../../shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
 
