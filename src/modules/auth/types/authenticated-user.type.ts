@@ -1,7 +1,9 @@
-import { Role, AuthMethod } from '@prisma/client';
-
 export interface AuthenticatedUser {
   userId: string;
-  role: Role;
-  authMethods: AuthMethod[];
+  capabilities: {
+    customer: boolean;
+    admin: boolean;
+    rider: boolean;
+    vendorIds: string[];
+  };
 }

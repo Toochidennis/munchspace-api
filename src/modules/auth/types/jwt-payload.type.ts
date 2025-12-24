@@ -1,9 +1,11 @@
-import { Role, AuthMethod } from '@prisma/client';
-
 export interface JwtPayload {
-  sub: string; // user ID
-  role: Role;
-  authMethods: AuthMethod[];
+  sub: string;
+  capabilities: {
+    customer: boolean;
+    admin: boolean;
+    rider: boolean;
+    vendorIds: string[];
+  };
   iat?: number;
   exp?: number;
 }

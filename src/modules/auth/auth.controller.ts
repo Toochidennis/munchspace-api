@@ -1,8 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto, SendOtpDto, VerifyOtpDto } from '@/modules/auth/dto';
 import { AuthService } from '@/modules/auth/auth.service';
-import { RefreshDto } from '@/modules/auth/dto/refresh.dto';
+import { User } from '@/modules/auth/decorators/user.decorator';
+import { RefreshJwtGuard } from '@/shared/guards/refresh-jwt.guard';
+import type { AuthenticatedUser } from '@/modules/auth/types/authenticated-user.type';
 
 @Controller('auth')
 export class AuthController {
@@ -25,8 +27,12 @@ export class AuthController {
     return this.auth.verifyOtp(dto.identifier, dto.otp);
   }
 
+  @UseGuards(RefreshJwtGuard)
   @Post('refresh')
-  refreshTokens(@Body() dto: RefreshDto) {
-    return this.auth.refreshTokens(dto.userId);
+  refreshTokens(@User() user: AuthenticatedUser) {
+    return this.auth.refreshTokens({
+      sub: user.userId,
+      capabilities: user.capabilities,
+    });
   }
 }

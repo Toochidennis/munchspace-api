@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from './token.util';
-import { OtpService } from '../../shared/infra/otp/otp.service';
+import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
 
@@ -36,7 +36,7 @@ export class AuthService {
       return { next: 'otp_sent' };
     }
 
-    return this._issueTokens(user.id, user.role);
+    return this.issueTokens(user.id);
   }
 
   async sendOtp(identifier: string) {
@@ -60,15 +60,16 @@ export class AuthService {
 
     await this.otpService.verify(user.id, otp);
 
-    return this._issueTokens(user.id, user.role);
+    return this.issueTokens(user.id);
   }
 
-  async refreshTokens(userId: string) {
-    const user = await this.validateUserById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
-
-    return this._issueTokens(user.id, user.role);
+async refreshTokens(payload: JwtPayload) {
+  return {
+    accessToken: this.tokenUtil.generateAccessToken(payload),
+    refreshToken: this.tokenUtil.generateRefreshToken(payload),
   }
+}
+
 
   async validateUserById(userId: string) {
     return await this.prisma.client.user.findUnique({ where: { id: userId } });
@@ -82,10 +83,36 @@ export class AuthService {
     });
   }
 
-  _issueTokens(userId: string, role: string) {
+  private async issueTokens(userId: string) {
+    const capabilities = await this.buildCapabilities(userId);
+
+    const payload = {
+      sub: userId,
+      capabilities,
+    };
+
     return {
-      accessToken: this.tokenUtil.generateAccessToken(userId, role),
-      refreshToken: this.tokenUtil.generateRefreshToken(userId, role),
+      accessToken: this.tokenUtil.generateAccessToken(payload),
+      refreshToken: this.tokenUtil.generateRefreshToken(payload),
+    };
+  }
+
+  private async buildCapabilities(userId: string) {
+    const [customer, admin, rider, vendorUsers] = await Promise.all([
+      this.prisma.client.customer.findUnique({ where: { userId } }),
+      this.prisma.client.admin.findUnique({ where: { userId } }),
+      this.prisma.client.rider.findUnique({ where: { userId } }),
+      this.prisma.client.vendorUser.findMany({
+        where: { userId, isActive: true },
+        select: { vendorId: true },
+      }),
+    ]);
+
+    return {
+      customer: !!customer,
+      admin: !!admin,
+      rider: !!rider,
+      vendorIds: vendorUsers.map((v) => v.vendorId),
     };
   }
 }

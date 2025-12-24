@@ -34,7 +34,10 @@ import { ProfileModule } from '@/modules/profile/profile.module';
       isGlobal: true,
       validate: (env) => {
         if (!env.JWT_SECRET) {
-          throw new Error('JWT_SECRET is not defined in environment variables');
+          throw new Error('JWT_SECRET is missing');
+        }
+        if (!env.JWT_REFRESH_SECRET) {
+          throw new Error('JWT_REFRESH_SECRET is missing');
         }
         return env;
       },
