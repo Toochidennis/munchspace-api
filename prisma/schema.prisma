@@ -561,3 +561,14 @@ model MenuAddon {
 
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 }
+
+model Cart {
+  id         String @id @default(cuid())
+  userId String
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    CartItem[]
+}
