@@ -34,7 +34,6 @@ export class CustomerService {
       await tsx.customer.create({
         data: {
           userId: user.id,
-          name: customerData.name,
           email: customerData.email,
           phone: customerData.phone,
         },
