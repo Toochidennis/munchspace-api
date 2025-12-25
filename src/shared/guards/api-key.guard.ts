@@ -1,3 +1,4 @@
+import { ClientType } from '@/modules/auth/types/client-type.type';
 import {
   CanActivate,
   ExecutionContext,
@@ -13,7 +14,7 @@ export class ApiKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<{
       headers: Record<string, string | string[] | undefined>;
-      clientType?: 'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN';
+      clientType?: ClientType;
     }>();
     const apiKey = request.headers['x-api-key'];
 
@@ -29,7 +30,7 @@ export class ApiKeyGuard implements CanActivate {
 
     const parsedApiKeyMap = JSON.parse(apiKeyMapString || '{}') as Record<
       string,
-      'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN'
+      ClientType
     >;
 
     const clientType = parsedApiKeyMap[apiKey];

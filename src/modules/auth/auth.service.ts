@@ -4,12 +4,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { TokenUtil } from './token.util';
+import { TokenUtil } from '@/modules/auth/token.util';
 import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
-import { JwtPayload } from './types/jwt-payload.type';
-import { SignUpDto } from './dto';
+import { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
+import { SignupDto } from '@/modules/auth/dto';
+import { ClientType } from './types/client-type.type';
 
 @Injectable()
 export class AuthService {
@@ -19,10 +20,7 @@ export class AuthService {
     private readonly otpService: OtpService,
   ) {}
 
-  async signUp(
-    dto: SignUpDto,
-    clientType: 'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN',
-  ) {
+  async signup(dto: SignupDto, clientType: ClientType) {
     const existing = await this.prisma.client.user.findFirst({
       where: {
         OR: [{ email: dto.email }, { phone: dto.phone }],
@@ -35,6 +33,17 @@ export class AuthService {
       );
     }
 
+    const authMethods = new Set<AuthMethod>();
+
+    authMethods.add(
+      this.resolveOtpChannel(clientType) === 'EMAIL'
+        ? AuthMethod.EMAIL_OTP
+        : AuthMethod.SMS_OTP,
+    );
+    if (dto.password) {
+      authMethods.add(AuthMethod.PASSWORD);
+    }
+
     const user = await this.prisma.client.user.create({
       data: {
         email: dto.email,
@@ -42,12 +51,24 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName || '',
         passwordHash: dto.password ? await bcrypt.hash(dto.password, 10) : null,
-        authMethods: [AuthMethod.EMAIL_OTP],
+        authMethods: Array.from(authMethods),
         isVerified: false,
       },
     });
 
-    
+    await this.prisma.client.user.update({
+      where: { id: user.id },
+      data: {
+        signupClientType: clientType,
+      },
+    });
+
+    return await this.dispatchOtp(clientType, user);
+  }
+
+  private resolveOtpChannel(clientType: ClientType): 'EMAIL' | 'PHONE' {
+    if (clientType === 'CUSTOMER') return 'PHONE';
+    return 'EMAIL';
   }
 
   async validatePasswordLogin(email: string, password: string) {
@@ -76,7 +97,7 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
-  async sendOtp(identifier: string) {
+  async sendOtp(identifier: string, clientType: ClientType) {
     const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
 
@@ -84,15 +105,7 @@ export class AuthService {
       throw new UnauthorizedException('Account disabled');
     }
 
-    if (user.authMethods.includes(AuthMethod.SMS_OTP)) {
-      await this.otpService.send(user.id, identifier);
-    }
-
-    if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
-      await this.otpService.send(user.id, identifier);
-    }
-
-    return { message: 'otp_sent' };
+    return await this.dispatchOtp(clientType, user);
   }
 
   async verifyOtp(identifier: string, otp: string) {
@@ -102,6 +115,49 @@ export class AuthService {
     await this.otpService.verify(user.id, otp);
 
     return this.issueTokens(user.id);
+  }
+
+  private async dispatchOtp(
+    clientType: ClientType,
+    user: {
+      id: string;
+      email: string;
+      phone: string;
+      authMethods: AuthMethod[];
+    },
+  ) {
+    const primaryChannel = this.resolveOtpChannel(clientType);
+
+    if (
+      primaryChannel === 'PHONE' &&
+      !user.authMethods.includes(AuthMethod.SMS_OTP)
+    ) {
+      throw new UnauthorizedException('SMS OTP not enabled for this account');
+    }
+
+    if (
+      primaryChannel === 'EMAIL' &&
+      !user.authMethods.includes(AuthMethod.EMAIL_OTP)
+    ) {
+      throw new UnauthorizedException('Email OTP not enabled for this account');
+    }
+
+    if (primaryChannel === 'PHONE') {
+      await this.otpService.send(user.id, user.phone);
+    } else {
+      await this.otpService.send(user.id, user.email);
+    }
+
+    //optional secondary channels
+    if (primaryChannel !== 'EMAIL' && user.email) {
+      await this.otpService.send(user.id, user.email);
+    }
+
+    if (primaryChannel !== 'PHONE' && user.phone) {
+      await this.otpService.send(user.id, user.phone);
+    }
+
+    return { message: 'otp_sent' };
   }
 
   refreshTokens(payload: JwtPayload) {

@@ -214,6 +214,13 @@ enum PromotionTarget {
   ITEM
 }
 
+enum ClientType {
+  CUSTOMER
+  VENDOR
+  RIDER
+  ADMIN
+}
+
 //  ----- Models ------
 /**
  * Models are the main building blocks of your Prisma schema.
@@ -230,9 +237,11 @@ model User {
   authMethods  AuthMethod[]
   passwordHash String?
 
-  signUpContext String?
-  
+  signupClientType ClientType?
+
   isVerified Boolean   @default(false)
+  emailVerified Boolean @default(false)
+  phoneVerified Boolean @default(false)
   verifiedAt DateTime?
 
   isActive  Boolean @default(true)

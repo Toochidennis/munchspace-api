@@ -6,7 +6,7 @@ import {
   IsPhoneNumber,
 } from 'class-validator';
 
-export class SignUpDto {
+export class SignupDto {
   @IsNotEmpty()
   @IsString()
   firstName: string;
