@@ -13,6 +13,7 @@ export class ApiKeyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<{
       headers: Record<string, string | string[] | undefined>;
+      clientType?: 'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN';
     }>();
     const apiKey = request.headers['x-api-key'];
 
@@ -20,11 +21,24 @@ export class ApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('API key is missing');
     }
 
-    const validKeys = this.configService.get<string>('API_KEYS')?.split(',');
+    const apiKeyMapString = this.configService.get<string>('API_KEY_MAP');
 
-    if (!validKeys || !validKeys.includes(apiKey)) {
-      throw new UnauthorizedException(`Invalid API key ${apiKey}`);
+    if (!apiKeyMapString) {
+      throw new UnauthorizedException('API key map is not configured');
     }
+
+    const parsedApiKeyMap = JSON.parse(apiKeyMapString || '{}') as Record<
+      string,
+      'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN'
+    >;
+
+    const clientType = parsedApiKeyMap[apiKey];
+
+    if (!clientType) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    request.clientType = clientType;
 
     return true;
   }

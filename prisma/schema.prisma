@@ -230,6 +230,8 @@ model User {
   authMethods  AuthMethod[]
   passwordHash String?
 
+  signUpContext String?
+  
   isVerified Boolean   @default(false)
   verifiedAt DateTime?
 

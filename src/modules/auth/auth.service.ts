@@ -9,6 +9,7 @@ import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
 import { JwtPayload } from './types/jwt-payload.type';
+import { SignUpDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,37 @@ export class AuthService {
     private tokenUtil: TokenUtil,
     private readonly otpService: OtpService,
   ) {}
+
+  async signUp(
+    dto: SignUpDto,
+    clientType: 'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN',
+  ) {
+    const existing = await this.prisma.client.user.findFirst({
+      where: {
+        OR: [{ email: dto.email }, { phone: dto.phone }],
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException(
+        'User with provided email or phone already exists',
+      );
+    }
+
+    const user = await this.prisma.client.user.create({
+      data: {
+        email: dto.email,
+        phone: dto.phone,
+        firstName: dto.firstName,
+        lastName: dto.lastName || '',
+        passwordHash: dto.password ? await bcrypt.hash(dto.password, 10) : null,
+        authMethods: [AuthMethod.EMAIL_OTP],
+        isVerified: false,
+      },
+    });
+
+    
+  }
 
   async validatePasswordLogin(email: string, password: string) {
     const user = await this.prisma.client.user.findUnique({ where: { email } });

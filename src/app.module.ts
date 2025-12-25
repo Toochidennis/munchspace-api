@@ -4,7 +4,6 @@ import { AppService } from '@/app.service';
 import { PrismaModule } from '@/shared/infra/prisma/prisma.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { CustomerModule } from '@/modules/customers/customer.module';
-import { RestaurantModule } from '@/vendors/restaurant.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
@@ -12,7 +11,6 @@ import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from '@/shared/filters/all-exceptions-filter.filter';
-import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from '@/shared/interceptor/response-interceptor.interceptor';
 import { ConfigModule } from '@nestjs/config';
@@ -23,7 +21,6 @@ import { ProfileModule } from '@/modules/profile/profile.module';
     PrismaModule,
     AuthModule,
     CustomerModule,
-    RestaurantModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -47,10 +44,6 @@ import { ProfileModule } from '@/modules/profile/profile.module';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ApiKeyGuard,
-    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
