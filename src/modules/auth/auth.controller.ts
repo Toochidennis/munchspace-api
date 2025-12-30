@@ -10,10 +10,10 @@ import { AuthService } from '@/modules/auth/auth.service';
 import { User } from '@/modules/auth/decorators/user.decorator';
 import { RefreshJwtGuard } from '@/shared/guards/refresh-jwt.guard';
 import type { AuthenticatedUser } from '@/modules/auth/types/authenticated-user.type';
-import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
 import type { ClientType } from '@/modules/auth/types/client-type.type';
+import { UseApiKey } from '@/modules/auth/decorators/use-api-key.decorator';
 
-@UseGuards(ApiKeyGuard)
+@UseApiKey()
 @Controller('auth')
 export class AuthController {
   constructor(private auth: AuthService) {}
@@ -31,8 +31,8 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('send-otp')
-  sendOtp(@Body() dto: SendOtpDto) {
-    return this.auth.sendOtp(dto.identifier);
+  sendOtp(@Body() dto: SendOtpDto, @Req() req: ClientType) {
+    return this.auth.sendOtp(dto.identifier, req);
   }
 
   @Throttle({ default: { limit: 5, ttl: 300000 } })

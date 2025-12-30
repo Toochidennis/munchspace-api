@@ -10,7 +10,7 @@ import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod } from '@prisma/client';
 import { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
 import { SignupDto } from '@/modules/auth/dto';
-import { ClientType } from './types/client-type.type';
+import { ClientType } from '@/modules/auth/types/client-type.type';
 
 @Injectable()
 export class AuthService {
@@ -113,6 +113,78 @@ export class AuthService {
     if (!user) throw new BadRequestException('User not found');
 
     await this.otpService.verify(user.id, otp);
+
+    if (!user.emailVerified || !user.phoneVerified) {
+      if (user.email) {
+        user.emailVerified = true;
+      }
+      if (user.phone) {
+        user.phoneVerified = true;
+      }
+      await this.prisma.client.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: user.emailVerified,
+          phoneVerified: user.phoneVerified,
+          isVerified: user.emailVerified && user.phoneVerified,
+        },
+      });
+    }
+
+    const isSignupFlow = Boolean(user.signupClientType);
+
+    if (isSignupFlow) {
+      if (user.signupClientType === 'CUSTOMER') {
+        const existingCustomer = await this.prisma.client.customer.findUnique({
+          where: { userId: user.id },
+        });
+
+        if (!existingCustomer) {
+          await this.prisma.client.customer.create({
+            data: {
+              userId: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              phone: user.phone,
+            },
+          });
+        }
+      }
+
+      if (user.signupClientType === 'VENDOR') {
+        const existingVendor = await this.prisma.client.vendor.findUnique({
+          where: { userId: user.id },
+        });
+
+        if (!existingVendor) {
+          const vendor = await this.prisma.client.vendor.create({
+            data: {
+              userId: user.id,
+              legalName: `${user.firstName} ${user.lastName}`,
+              displayName: user.firstName,
+              supportEmail: user.email,
+              supportPhone: user.phone,
+              address: 'PENDING',
+            },
+          });
+
+          await this.prisma.client.vendorUser.create({
+            data: {
+              userId: user.id,
+              vendorId: vendor.id,
+              role: 'OWNER',
+            },
+          });
+        }
+      }
+
+      // cleanup only for signup
+      await this.prisma.client.user.update({
+        where: { id: user.id },
+        data: { signupClientType: null },
+      });
+    }
 
     return this.issueTokens(user.id);
   }

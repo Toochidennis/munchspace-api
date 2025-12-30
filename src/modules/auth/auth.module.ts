@@ -7,6 +7,9 @@ import { AccessJwtStrategy } from '@/modules/auth/strategies/access-jwt.strategy
 import { RefreshJwtStrategy } from '@/modules/auth/strategies/refresh-jwt.strategy';
 import { TokenUtil } from '@/modules/auth/token.util';
 import { OtpModule } from '@/shared/infra/otp/otp.module';
+import { API_KEY_RESOLVER } from '@/shared/tokens/api-key-resolver.token';
+import { EnvApiKeyResolver } from '@/modules/auth/resolvers/env-api-key.resolver.';
+import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
 
 @Module({
   imports: [
@@ -18,8 +21,17 @@ import { OtpModule } from '@/shared/infra/otp/otp.module';
     }),
     OtpModule,
   ],
-  providers: [AuthService, AccessJwtStrategy, RefreshJwtStrategy, TokenUtil],
+  providers: [
+    AuthService,
+    AccessJwtStrategy,
+    RefreshJwtStrategy,
+    TokenUtil,
+    {
+      provide: API_KEY_RESOLVER,
+      useClass: EnvApiKeyResolver,
+    },
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, ApiKeyGuard, API_KEY_RESOLVER],
 })
 export class AuthModule {}

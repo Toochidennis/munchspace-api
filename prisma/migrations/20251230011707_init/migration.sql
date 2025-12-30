@@ -70,6 +70,9 @@ CREATE TYPE "PromotionStatus" AS ENUM ('DRAFT', 'ACTIVE', 'PAUSED', 'EXPIRED');
 -- CreateEnum
 CREATE TYPE "PromotionTarget" AS ENUM ('ORDER', 'ITEM');
 
+-- CreateEnum
+CREATE TYPE "ClientType" AS ENUM ('CUSTOMER', 'VENDOR', 'RIDER', 'ADMIN');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -79,7 +82,10 @@ CREATE TABLE "User" (
     "phone" TEXT NOT NULL,
     "authMethods" "AuthMethod"[],
     "passwordHash" TEXT,
+    "signupClientType" "ClientType",
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "phoneVerified" BOOLEAN NOT NULL DEFAULT false,
     "verifiedAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isBlocked" BOOLEAN NOT NULL DEFAULT false,

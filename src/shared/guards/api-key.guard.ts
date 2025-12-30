@@ -1,15 +1,19 @@
+import type { ApiKeyResolver } from '@/modules/auth/types/api-key-resolver.type';
 import { ClientType } from '@/modules/auth/types/client-type.type';
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { API_KEY_RESOLVER } from '@/shared/tokens/api-key-resolver.token';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private configService: ConfigService) {}
+  constructor(
+    @Inject(API_KEY_RESOLVER) private readonly apiKeyResolver: ApiKeyResolver,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<{
@@ -22,18 +26,7 @@ export class ApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('API key is missing');
     }
 
-    const apiKeyMapString = this.configService.get<string>('API_KEY_MAP');
-
-    if (!apiKeyMapString) {
-      throw new UnauthorizedException('API key map is not configured');
-    }
-
-    const parsedApiKeyMap = JSON.parse(apiKeyMapString || '{}') as Record<
-      string,
-      ClientType
-    >;
-
-    const clientType = parsedApiKeyMap[apiKey];
+    const clientType = this.apiKeyResolver.resolve(apiKey);
 
     if (!clientType) {
       throw new UnauthorizedException('Invalid API key');
