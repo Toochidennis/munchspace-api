@@ -49,15 +49,6 @@ enum PaymentSchedule {
   MONTHLY
 }
 
-enum OnBoardingStage {
-  BASIC
-  DOCUMENTS
-  BANK
-  MENU
-  CHARGES
-  LIVE
-}
-
 enum BusinessType {
   RESTAURANT
   CAFE
@@ -96,14 +87,22 @@ enum BrandType {
 }
 
 enum ReviewStatus {
-  ONBOARDING
+  DRAFT
   PENDING
-  VERIFIED
-  ACTIVE
   APPROVED
+  ACTIVE
   REJECTED
   SUSPENDED
   CLOSED
+}
+
+enum OnBoardingStage {
+  BASIC
+  DOCUMENTS
+  BANK
+  MENU
+  CHARGES
+  LIVE
 }
 
 enum PriceRange {
@@ -493,7 +492,7 @@ model Vendor {
   supportPhone String @unique
   address      String
 
-  status          ReviewStatus    @default(ONBOARDING)
+  status          ReviewStatus    @default(DRAFT)
   onBoardingStage OnBoardingStage @default(BASIC)
 
   createdAt DateTime @default(now())
@@ -594,13 +593,13 @@ model Business {
   description   String
 
   businessType      BusinessType
-  brandType         BrandType
+  brandType         BrandType?
   serviceOperations ServiceOperation[]
 
-  registrationNumber String @unique
-  taxId              String @unique
+  registrationNumber String? @unique
+  taxId              String? @unique
 
-  status          ReviewStatus
+  status          ReviewStatus @default(DRAFT)
   onBoardingStage OnBoardingStage @default(BASIC)
 
   isActive   Boolean @default(false)

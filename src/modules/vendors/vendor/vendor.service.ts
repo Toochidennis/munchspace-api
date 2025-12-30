@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateBusinessDto } from '@/modules/vendors/vendor/dto/create-business.dto';
-import { ReviewStatus, OnBoardingStage, VendorRole } from '@prisma/client';
+import { OnBoardingStage, VendorRole, AvailabilityType } from '@prisma/client';
 import slugify from 'slugify';
 
 @Injectable()
@@ -46,6 +46,7 @@ export class VendorService {
     return this.prisma.client.$transaction(async (tx) => {
       const business = await tx.business.create({
         data: {
+          vendorId: vendor.id,
           legalName: dto.legalName,
           displayName: dto.displayName,
           slug,
@@ -55,9 +56,6 @@ export class VendorService {
           description: dto.description,
           businessType: dto.businessType,
           serviceOperations: dto.serviceOperations,
-          status: ReviewStatus.ONBOARDING,
-          onBoardingStage: OnBoardingStage.BASIC,
-          isActive: true,
         },
       });
 
@@ -106,20 +104,17 @@ export class VendorService {
             businessId: business.id,
             locationId: location.id,
             dayOfWeek: this.mapDayToNumber(wh.day),
-            availabilityType: 'OPEN',
+            availabilityType: AvailabilityType.OPEN,
             openingTime: new Date(`1970-01-01T${wh.openTime}:00Z`),
             closingTime: new Date(`1970-01-01T${wh.closeTime}:00Z`),
           },
         });
       }
 
-      // 4f. Update vendor onboarding state
+      // Update vendor onboarding state
       await tx.vendor.update({
         where: { id: vendor.id },
-        data: {
-          status: ReviewStatus.ACTIVE,
-          onBoardingStage: OnBoardingStage.BASIC,
-        },
+        data: { onBoardingStage: OnBoardingStage.DOCUMENTS },
       });
 
       return business;

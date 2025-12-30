@@ -7,11 +7,12 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { WorkingHourDto } from '@/modules/vendors/vendor/dto/working-hour.dto';
 import { AddressDto } from '@/modules/vendors/vendor/dto/address.dto';
-import { BusinessType, ServiceOperation } from '@prisma/client';
+import { BrandType, BusinessType, ServiceOperation } from '@prisma/client';
 
 export class CreateBusinessDto {
   @IsString()
@@ -39,9 +40,22 @@ export class CreateBusinessDto {
   @IsNotEmpty()
   description: string;
 
+  @IsEnum(BusinessType)
+  businessType: BusinessType;
+
+  @IsEnum(BrandType)
+  @IsOptional()
+  brandType: BrandType;
+
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  businessType: BusinessType;
+  registrationNumber: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  taxId: string;
 
   @IsArray()
   @IsString({ each: true })
