@@ -12,7 +12,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     });
     this.prisma = new PrismaClient({
       adapter,
-      log: ['warn', 'error'],
+      log: ['warn', 'error', 'query'],
     });
   }
 

@@ -1,49 +1,103 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { addMinutes, isAfter } from 'date-fns';
-import { Prisma } from '@prisma/client';
+import { OtpStore } from '@/modules/auth/types/otp-store.type';
 
 @Injectable()
-export class OtpStore {
+export class PrismaOtpStore implements OtpStore {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(
-    userId: string,
-    otp: string,
-    ttlMinutes = 5,
-    tsx?: Prisma.TransactionClient,
-  ) {
-    const otpHash = await bcrypt.hash(otp, 10);
-    const prismaClient = tsx || this.prisma.client;
+  async save(input: {
+    userId: string;
+    channel: 'EMAIL' | 'PHONE';
+    otp: string;
+    ttlMinutes: number;
+    resendCooldownSeconds: number;
+  }): Promise<void> {
+    const otpHash = await bcrypt.hash(input.otp, 10);
 
-    return prismaClient.otp.upsert({
-      where: { userId },
+    await this.prisma.client.otp.upsert({
+      where: {
+        userId_channel: {
+          userId: input.userId,
+          channel: input.channel,
+        },
+      },
       update: {
         otpHash,
-        expiresAt: addMinutes(new Date(), ttlMinutes),
+        attempts: 0,
+        expiresAt: addMinutes(new Date(), input.ttlMinutes),
+        resendAt: addMinutes(new Date(), input.resendCooldownSeconds / 60),
       },
       create: {
-        userId,
+        userId: input.userId,
+        channel: input.channel,
         otpHash,
-        expiresAt: addMinutes(new Date(), ttlMinutes),
+        attempts: 0,
+        expiresAt: addMinutes(new Date(), input.ttlMinutes),
+        resendAt: addMinutes(new Date(), input.resendCooldownSeconds / 60),
       },
     });
+
+    console.log('OTP saved for user:', input.userId, 'channel:', input.channel);
   }
 
-  async verify(userId: string, plainOtp: string): Promise<boolean> {
-    const otpRecord = await this.prisma.client.otp.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
+  async canResend(
+    userId: string,
+    channel: 'EMAIL' | 'PHONE',
+  ): Promise<boolean> {
+    const record = await this.prisma.client.otp.findUnique({
+      where: {
+        userId_channel: { userId, channel },
+      },
     });
 
-    if (!otpRecord) return false;
-    if (isAfter(new Date(), otpRecord.expiresAt)) return false;
+    if (!record) return true;
 
-    return bcrypt.compare(plainOtp, otpRecord.otpHash);
+    return isAfter(new Date(), record.resendAt);
   }
 
-  async clear(userId: string) {
-    await this.prisma.client.otp.deleteMany({ where: { userId } });
+  async verify(input: {
+    userId: string;
+    channel: 'EMAIL' | 'PHONE';
+    otp: string;
+    maxAttempts: number;
+  }): Promise<boolean> {
+    const record = await this.prisma.client.otp.findUnique({
+      where: {
+        userId_channel: {
+          userId: input.userId,
+          channel: input.channel,
+        },
+      },
+    });
+
+    console.log('OTP record found:', record);
+
+    if (!record) return false;
+    if (isAfter(new Date(), record.expiresAt)) return false;
+    if (record.attempts >= input.maxAttempts) return false;
+
+    const match = await bcrypt.compare(input.otp, record.otpHash);
+
+    console.log('OTP match result:', match);
+
+    await this.prisma.client.otp.update({
+      where: { id: record.id },
+      data: {
+        attempts: { increment: 1 },
+      },
+    });
+
+    return match;
+  }
+
+  async clear(userId: string, channel: 'EMAIL' | 'PHONE'): Promise<void> {
+    await this.prisma.client.otp.delete({
+      where: {
+        userId_channel: { userId, channel },
+      },
+    });
   }
 }

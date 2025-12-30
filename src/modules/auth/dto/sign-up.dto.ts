@@ -24,6 +24,7 @@ export class SignupDto {
   email: string;
 
   @IsOptional()
+  @IsString()
   @MinLength(6)
   password?: string;
 }

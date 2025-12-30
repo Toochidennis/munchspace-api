@@ -1,19 +1,23 @@
 import { Module } from '@nestjs/common';
 import { OtpService } from '@/shared/infra/otp/otp.service';
-import { OtpStore } from '@/shared/infra/otp/otp.store';
-import { OTP_SENDER } from '@/shared/infra/otp/otp.tokens';
+import { PrismaOtpStore } from '@/shared/infra/otp/otp.store';
+import { OTP_SENDER, OTP_STORE } from '@/shared/tokens/otp.tokens';
 import { SmsOtpSender } from '@/shared/infra/otp/sms-otp-sender';
 
 @Module({
   imports: [],
   providers: [
     OtpService,
-    OtpStore,
+    PrismaOtpStore,
     {
       provide: OTP_SENDER,
       useClass: SmsOtpSender,
     },
+    {
+      provide: OTP_STORE,
+      useClass: PrismaOtpStore,
+    },
   ],
-  exports: [OtpService],
+  exports: [OtpService, OTP_STORE],
 })
 export class OtpModule {}

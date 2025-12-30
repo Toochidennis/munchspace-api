@@ -8,9 +8,9 @@ import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from '@/modules/auth/token.util';
 import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
-import { AuthMethod } from '@prisma/client';
+import { AuthMethod, User } from '@prisma/client';
 import { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
-import { SignupDto } from '@/modules/auth/dto';
+import { SignupDto, VerifyOtpDto } from '@/modules/auth/dto';
 import { ClientType } from '@/modules/auth/types/client-type.type';
 
 @Injectable()
@@ -37,11 +37,17 @@ export class AuthService {
     const authMethods = new Set<AuthMethod>();
 
     authMethods.add(
-      this.resolveOtpChannel(clientType) === 'EMAIL'
+      this.allowedOtpChannel(clientType) === 'EMAIL'
         ? AuthMethod.EMAIL_OTP
         : AuthMethod.SMS_OTP,
     );
-    if (dto.password) {
+
+    if (clientType === 'VENDOR' || clientType === 'ADMIN') {
+      if (!dto.password) {
+        throw new BadRequestException(
+          'Password is required for this client type',
+        );
+      }
       authMethods.add(AuthMethod.PASSWORD);
     }
 
@@ -53,23 +59,22 @@ export class AuthService {
         lastName: dto.lastName || '',
         passwordHash: dto.password ? await bcrypt.hash(dto.password, 10) : null,
         authMethods: Array.from(authMethods),
-        isVerified: false,
-      },
-    });
-
-    await this.prisma.client.user.update({
-      where: { id: user.id },
-      data: {
         signupClientType: clientType,
       },
     });
 
-    return await this.dispatchOtp(clientType, user);
+    return await this.dispatchOtp(user);
   }
 
-  private resolveOtpChannel(clientType: ClientType): 'EMAIL' | 'PHONE' {
+  private allowedOtpChannel(clientType: ClientType): 'EMAIL' | 'PHONE' {
     if (clientType === 'CUSTOMER') return 'PHONE';
     return 'EMAIL';
+  }
+
+  private getPrimaryOtpChannel(user: User): 'EMAIL' | 'PHONE' {
+    if (user.authMethods.includes(AuthMethod.SMS_OTP)) return 'PHONE';
+    if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) return 'EMAIL';
+    throw new BadRequestException('No OTP method configured');
   }
 
   async validatePasswordLogin(email: string, password: string) {
@@ -87,18 +92,19 @@ export class AuthService {
     const user = await this.validatePasswordLogin(email, password);
 
     if (!user.isActive || user.isBlocked) {
+      console.log('Account disabled for user:', user.id);
       throw new UnauthorizedException('Account disabled');
     }
 
     if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
-      await this.otpService.send(user.id, user.email);
-      return { next: 'otp_sent' };
+      console.log('User requires OTP verification:', user.id);
+      return await this.dispatchOtp(user);
     }
 
     return this.issueTokens(user.id);
   }
 
-  async sendOtp(identifier: string, clientType: ClientType) {
+  async sendOtp(identifier: string) {
     const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
 
@@ -106,32 +112,37 @@ export class AuthService {
       throw new UnauthorizedException('Account disabled');
     }
 
-    return await this.dispatchOtp(clientType, user);
+    return await this.dispatchOtp(user);
   }
 
-  async verifyOtp(identifier: string, otp: string) {
-    const user = await this.findUserByEmailOrPhone(identifier);
-    console.log('Verifying OTP for user:', user);
+  async verifyOtp(dto: VerifyOtpDto) {
+    const user = await this.findUserByEmailOrPhone(dto.identifier);
+
     if (!user) throw new BadRequestException('User not found');
 
-    await this.otpService.verify(user.id, otp);
+    const channel = this.getPrimaryOtpChannel(user);
 
-    if (!user.emailVerified || !user.phoneVerified) {
-      if (user.email) {
-        user.emailVerified = true;
-      }
-      if (user.phone) {
-        user.phoneVerified = true;
-      }
-      await this.prisma.client.user.update({
-        where: { id: user.id },
-        data: {
-          emailVerified: user.emailVerified,
-          phoneVerified: user.phoneVerified,
-          isVerified: user.emailVerified && user.phoneVerified,
-        },
-      });
-    }
+    await this.otpService.verify({
+      userId: user.id,
+      channel: channel,
+      otp: dto.otp,
+    });
+
+    if (channel === 'EMAIL') user.emailVerified = true;
+    if (channel === 'PHONE') user.phoneVerified = true;
+
+    user.isVerified =
+      (user.emailVerified || !user.email) &&
+      (user.phoneVerified || !user.phone);
+
+    await this.prisma.client.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+        isVerified: user.emailVerified && user.phoneVerified,
+      },
+    });
 
     const isSignupFlow = Boolean(user.signupClientType);
 
@@ -191,47 +202,42 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
-  private async dispatchOtp(
-    clientType: ClientType,
-    user: {
-      id: string;
-      email: string;
-      phone: string;
-      authMethods: AuthMethod[];
-    },
-  ) {
-    const primaryChannel = this.resolveOtpChannel(clientType);
+  private async dispatchOtp(user: User) {
+    const primary = this.getPrimaryOtpChannel(user);
 
-    if (
-      primaryChannel === 'PHONE' &&
-      !user.authMethods.includes(AuthMethod.SMS_OTP)
-    ) {
-      throw new UnauthorizedException('SMS OTP not enabled for this account');
+    const channels: Array<{
+      channel: 'EMAIL' | 'PHONE';
+      destination: string;
+    }> = [];
+
+    if (primary === 'EMAIL' && user.email) {
+      channels.push({ channel: 'EMAIL', destination: user.email });
     }
 
-    if (
-      primaryChannel === 'EMAIL' &&
-      !user.authMethods.includes(AuthMethod.EMAIL_OTP)
-    ) {
-      throw new UnauthorizedException('Email OTP not enabled for this account');
+    if (primary === 'PHONE' && user.phone) {
+      channels.push({ channel: 'PHONE', destination: user.phone });
     }
 
-    if (primaryChannel === 'PHONE') {
-      await this.otpService.send(user.id, user.phone);
-    } else {
-      await this.otpService.send(user.id, user.email);
+    // // optional secondary
+    // if (primary !== 'EMAIL' && user.email) {
+    //   channels.push({ channel: 'EMAIL', destination: user.email });
+    // }
+
+    // if (primary !== 'PHONE' && user.phone) {
+    //   channels.push({ channel: 'PHONE', destination: user.phone });
+    // }
+
+    for (const ch of channels) {
+      await this.otpService.send({
+        userId: user.id,
+        channel: ch.channel,
+        destination: ch.destination,
+      });
     }
 
-    //optional secondary channels
-    if (primaryChannel !== 'EMAIL' && user.email) {
-      await this.otpService.send(user.id, user.email);
-    }
-
-    if (primaryChannel !== 'PHONE' && user.phone) {
-      await this.otpService.send(user.id, user.phone);
-    }
-
-    return { message: 'otp_sent' };
+    return {
+      message: 'otp_sent',
+    };
   }
 
   refreshTokens(payload: JwtPayload) {

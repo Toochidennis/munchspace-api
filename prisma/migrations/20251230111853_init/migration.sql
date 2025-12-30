@@ -73,6 +73,9 @@ CREATE TYPE "PromotionTarget" AS ENUM ('ORDER', 'ITEM');
 -- CreateEnum
 CREATE TYPE "ClientType" AS ENUM ('CUSTOMER', 'VENDOR', 'RIDER', 'ADMIN');
 
+-- CreateEnum
+CREATE TYPE "OtpChannel" AS ENUM ('PHONE', 'EMAIL');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -102,8 +105,11 @@ CREATE TABLE "User" (
 CREATE TABLE "Otp" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "channel" "OtpChannel" NOT NULL,
     "otpHash" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "resendAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Otp_pkey" PRIMARY KEY ("id")
@@ -741,7 +747,7 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Otp_userId_key" ON "Otp"("userId");
+CREATE UNIQUE INDEX "Otp_userId_channel_key" ON "Otp"("userId", "channel");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Customer_userId_key" ON "Customer"("userId");

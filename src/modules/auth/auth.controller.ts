@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   LoginDto,
@@ -12,6 +12,7 @@ import { RefreshJwtGuard } from '@/shared/guards/refresh-jwt.guard';
 import type { AuthenticatedUser } from '@/modules/auth/types/authenticated-user.type';
 import type { ClientType } from '@/modules/auth/types/client-type.type';
 import { UseApiKey } from '@/modules/auth/decorators/use-api-key.decorator';
+import { Client } from '@/modules/auth/decorators/client.decorator';
 
 @UseApiKey()
 @Controller('auth')
@@ -19,8 +20,8 @@ export class AuthController {
   constructor(private auth: AuthService) {}
 
   @Post('signup')
-  signup(@Body() dto: SignupDto, @Req() req: ClientType) {
-    return this.auth.signup(dto, req);
+  signup(@Body() dto: SignupDto, @Client() clientType: ClientType) {
+    return this.auth.signup(dto, clientType);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -31,14 +32,14 @@ export class AuthController {
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('send-otp')
-  sendOtp(@Body() dto: SendOtpDto, @Req() req: ClientType) {
-    return this.auth.sendOtp(dto.identifier, req);
+  sendOtp(@Body() dto: SendOtpDto) {
+    return this.auth.sendOtp(dto.identifier);
   }
 
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-otp')
   verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.auth.verifyOtp(dto.identifier, dto.otp);
+    return this.auth.verifyOtp(dto);
   }
 
   @UseGuards(RefreshJwtGuard)

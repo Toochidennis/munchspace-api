@@ -221,6 +221,11 @@ enum ClientType {
   ADMIN
 }
 
+enum OtpChannel {
+  PHONE
+  EMAIL
+}
+
 //  ----- Models ------
 /**
  * Models are the main building blocks of your Prisma schema.
@@ -254,7 +259,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  otp         Otp?
+  otp         Otp[]
   customer    Customer?
   admin       Admin?
   vendor      Vendor?
@@ -268,12 +273,19 @@ model User {
 // OTP model for storing one-time passwords
 model Otp {
   id        String   @id @default(cuid())
-  userId    String   @unique
+  userId    String
+  channel OtpChannel
+
   otpHash   String
   expiresAt DateTime
+  attempts  Int      @default(0)
+  resendAt  DateTime
+
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, channel])
 }
 
 // Customer model representing a customer user

@@ -23,6 +23,7 @@ import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
   ],
   providers: [
     ApiKeyGuard,
+    EnvApiKeyResolver,
     AuthService,
     AccessJwtStrategy,
     RefreshJwtStrategy,
