@@ -8,7 +8,7 @@ export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
   @Post('signup')
-  async createCustomer(@Body() customerData: CreateCustomerDto) {
-    return await this.customerService.storeCustomerData(customerData);
+  createCustomer(@Body() customerData: CreateCustomerDto) {
+   // return await this.customerService.storeCustomerData(customerData);
   }
 }

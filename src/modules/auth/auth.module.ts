@@ -22,6 +22,7 @@ import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
     OtpModule,
   ],
   providers: [
+    ApiKeyGuard,
     AuthService,
     AccessJwtStrategy,
     RefreshJwtStrategy,

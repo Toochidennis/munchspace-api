@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { TokenUtil } from '@/modules/auth/token.util';
@@ -28,7 +29,7 @@ export class AuthService {
     });
 
     if (existing) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'User with provided email or phone already exists',
       );
     }
@@ -110,6 +111,7 @@ export class AuthService {
 
   async verifyOtp(identifier: string, otp: string) {
     const user = await this.findUserByEmailOrPhone(identifier);
+    console.log('Verifying OTP for user:', user);
     if (!user) throw new BadRequestException('User not found');
 
     await this.otpService.verify(user.id, otp);
