@@ -75,28 +75,6 @@ enum BusinessType {
   POP_UP
 }
 
-enum CuisineType {
-  ITALIAN
-  CHINESE
-  INDIAN
-  MEXICAN
-  JAPANESE
-  FRENCH
-  THAI
-  AMERICAN
-  MEDITERRANEAN
-  MIDDLE_EASTERN
-}
-
-enum MealType {
-  BREAKFAST
-  LUNCH
-  DINNER
-  SNACKS
-  DESSERT
-  BEVERAGES
-}
-
 enum AvailabilityType {
   OPEN
   CLOSED
@@ -121,6 +99,7 @@ enum ReviewStatus {
   ONBOARDING
   PENDING
   VERIFIED
+  ACTIVE
   APPROVED
   REJECTED
   SUSPENDED

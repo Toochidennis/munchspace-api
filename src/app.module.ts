@@ -15,6 +15,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from '@/shared/interceptor/response-interceptor.interceptor';
 import { ConfigModule } from '@nestjs/config';
 import { ProfileModule } from '@/modules/profile/profile.module';
+import { VendorModule } from '@/modules/vendors/vendor/vendor.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ProfileModule } from '@/modules/profile/profile.module';
       },
     }),
     ProfileModule,
+    VendorModule,
   ],
   controllers: [AppController],
   providers: [

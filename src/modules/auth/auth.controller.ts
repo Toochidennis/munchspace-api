@@ -11,7 +11,7 @@ import { User } from '@/modules/auth/decorators/user.decorator';
 import { RefreshJwtGuard } from '@/shared/guards/refresh-jwt.guard';
 import type { AuthenticatedUser } from '@/modules/auth/types/authenticated-user.type';
 import type { ClientType } from '@/modules/auth/types/client-type.type';
-import { UseApiKey } from '@/modules/auth/decorators/use-api-key.decorator';
+import { UseApiKey } from '@/shared/decorators/use-api-key.decorator';
 import { Client } from '@/modules/auth/decorators/client.decorator';
 
 @UseApiKey()
