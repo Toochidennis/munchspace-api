@@ -246,9 +246,6 @@ export class VendorOnboardingService {
     };
   }
 
-  /* -------------------------------------------
-   * HELPERS
-   * ------------------------------------------- */
   private step(
     key: VendorOnboardingStep,
     title: string,
