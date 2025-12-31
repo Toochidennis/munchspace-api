@@ -1,3 +1,9 @@
-export abstract class OtpSender {
-  abstract sendOtp(destination: string, message: string): Promise<void>;
+export type OtpChannel = 'EMAIL' | 'PHONE';
+
+export interface OtpSender {
+  sendOtp(input: {
+    channel: OtpChannel;
+    destination: string;
+    message: string;
+  }): Promise<void>;
 }

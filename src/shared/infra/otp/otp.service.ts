@@ -1,14 +1,14 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { OtpGenerator } from '@/shared/infra/otp/otp.generator';
-import { OtpSender } from '@/shared/infra/otp/otp.sender';
+import { OtpGenerator } from './otp.generator';
 import { OTP_SENDER, OTP_STORE } from '@/shared/tokens/otp.tokens';
 import type { OtpStore } from '@/modules/auth/types/otp-store.type';
+import type { OtpSender } from './otp.sender';
 
 @Injectable()
 export class OtpService {
   constructor(
-    @Inject(OTP_SENDER) private readonly otpSender: OtpSender,
-    @Inject(OTP_STORE) private readonly otpStore: OtpStore,
+    @Inject(OTP_SENDER) private readonly sender: OtpSender,
+    @Inject(OTP_STORE) private readonly store: OtpStore,
   ) {}
 
   async send(input: {
@@ -16,10 +16,7 @@ export class OtpService {
     channel: 'EMAIL' | 'PHONE';
     destination: string;
   }) {
-    const canResend = await this.otpStore.canResend(
-      input.userId,
-      input.channel,
-    );
+    const canResend = await this.store.canResend(input.userId, input.channel);
 
     if (!canResend) {
       throw new BadRequestException(
@@ -29,7 +26,7 @@ export class OtpService {
 
     const otp = OtpGenerator.generate();
 
-    await this.otpStore.save({
+    await this.store.save({
       userId: input.userId,
       channel: input.channel,
       otp,
@@ -37,9 +34,13 @@ export class OtpService {
       resendCooldownSeconds: 60,
     });
 
-    const message = `Your verification code is: ${otp}. It will expire in 5 minutes.`;
+    const message = `Your MunchSpace verification code is ${otp}. Expires in 5 minutes.`;
 
-    await this.otpSender.sendOtp(input.destination, message);
+    await this.sender.sendOtp({
+      channel: input.channel,
+      destination: input.destination,
+      message,
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('[DEV OTP]', otp, '→', input.destination);
@@ -51,19 +52,17 @@ export class OtpService {
     channel: 'EMAIL' | 'PHONE';
     otp: string;
   }) {
-    const ok = await this.otpStore.verify({
+    const ok = await this.store.verify({
       userId: input.userId,
       channel: input.channel,
       otp: input.otp,
       maxAttempts: 5,
     });
 
-    console.log('OTP verification result for user', input.userId, ':', ok);
-
     if (!ok) {
-      throw new BadRequestException('Invalid OTP or expired OTP');
+      throw new BadRequestException('Invalid or expired OTP');
     }
 
-    await this.otpStore.clear(input.userId, input.channel);
+    await this.store.clear(input.userId, input.channel);
   }
 }

@@ -9,12 +9,18 @@ import {
   FastifyAdapter,
 } from '@nestjs/platform-fastify';
 import fastifyHelmet from '@fastify/helmet';
+import { VersioningType } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: true }),
   );
+
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   // app
   //   .getHttpAdapter()

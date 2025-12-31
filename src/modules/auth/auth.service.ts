@@ -12,12 +12,14 @@ import { AuthMethod, User } from '@prisma/client';
 import { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
 import { SignupDto, VerifyOtpDto } from '@/modules/auth/dto';
 import { ClientType } from '@/modules/auth/types/client-type.type';
+import { hashToken } from '@/modules/auth/token-hash.util';
+import { addDays } from 'date-fns';
 
 @Injectable()
 export class AuthService {
   constructor(
-    public prisma: PrismaService,
-    private tokenUtil: TokenUtil,
+    private readonly prisma: PrismaService,
+    private readonly tokenUtil: TokenUtil,
     private readonly otpService: OtpService,
   ) {}
 
@@ -240,7 +242,10 @@ export class AuthService {
     };
   }
 
-  refreshTokens(payload: JwtPayload) {
+  async refreshTokens(payload: JwtPayload, refreshToekn: string) {
+    const hashedToken = hashToken(refreshToekn);
+
+    const 
     return {
       accessToken: this.tokenUtil.generateAccessToken(payload),
       refreshToken: this.tokenUtil.generateRefreshToken(payload),
@@ -263,9 +268,19 @@ export class AuthService {
       capabilities,
     };
 
+    const refreshToken = this.tokenUtil.generateRefreshToken(payload);
+
+    await this.prisma.client.refreshToken.create({
+      data: {
+        userId,
+        tokenHash: hashToken(refreshToken),
+        expiresAt: addDays(new Date(), 14),
+      },
+    });
+
     return {
       accessToken: this.tokenUtil.generateAccessToken(payload),
-      refreshToken: this.tokenUtil.generateRefreshToken(payload),
+      refreshToken: refreshToken,
     };
   }
 

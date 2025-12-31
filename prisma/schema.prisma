@@ -78,6 +78,7 @@ enum ServiceOperation {
   DELIVERY
   CATERING
   PRE_ORDER
+  PICKUP
 }
 
 enum BrandType {
@@ -222,10 +223,10 @@ model User {
 
   signupClientType ClientType?
 
-  isVerified Boolean   @default(false)
-  emailVerified Boolean @default(false)
-  phoneVerified Boolean @default(false)
-  verifiedAt DateTime?
+  isVerified    Boolean   @default(false)
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  verifiedAt    DateTime?
 
   isActive  Boolean @default(true)
   isBlocked Boolean @default(false)
@@ -237,21 +238,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  otp         Otp[]
-  customer    Customer?
-  admin       Admin?
-  vendor      Vendor?
-  auditLogs   BusinessAuditLog[]
-  carts       Cart[]
-  orders      Order[]
-  vendorUsers VendorUser[]
-  rider       Rider?
+  otp           Otp[]
+  customer      Customer?
+  admin         Admin?
+  vendor        Vendor?
+  auditLogs     BusinessAuditLog[]
+  carts         Cart[]
+  orders        Order[]
+  vendorUsers   VendorUser[]
+  rider         Rider?
+  refreshTokens RefreshToken[]
 }
 
 // OTP model for storing one-time passwords
 model Otp {
-  id        String   @id @default(cuid())
-  userId    String
+  id      String     @id @default(cuid())
+  userId  String
   channel OtpChannel
 
   otpHash   String
@@ -264,6 +266,19 @@ model Otp {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, channel])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Customer model representing a customer user
@@ -599,7 +614,7 @@ model Business {
   registrationNumber String? @unique
   taxId              String? @unique
 
-  status          ReviewStatus @default(DRAFT)
+  status          ReviewStatus    @default(DRAFT)
   onBoardingStage OnBoardingStage @default(BASIC)
 
   isActive   Boolean @default(false)

@@ -69,15 +69,15 @@ export class CreateBusinessDto {
 
   @ApiProperty({
     enum: ServiceOperation,
-    description: `
-        DELIVERY: Orders are delivered to customers
-        PICKUP: Customers pick up orders themselves
-        DINE_IN: On-premise consumption
-        `,
+    isArray: true,
+    enumName: 'ServiceOperation',
+    example: [ServiceOperation.DELIVERY, ServiceOperation.CATERING],
   })
+  @IsArray()
   @IsEnum(ServiceOperation, {
     each: true,
-    message: `serviceOperations contains an invalid value`,
+    message: ({ value }) =>
+      `Invalid service operation "${value}". Allowed values: ${Object.values(ServiceOperation).join(', ')}`,
   })
   serviceOperations: ServiceOperation[];
 

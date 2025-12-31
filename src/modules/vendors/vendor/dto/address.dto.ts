@@ -26,4 +26,8 @@ export class AddressDto {
 
   @IsNumber()
   latitude: number;
+
+  @IsOptional()
+  @IsNumber()
+  postalCode?: number;
 }

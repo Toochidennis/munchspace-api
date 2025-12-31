@@ -16,10 +16,10 @@ import { Client } from '@/modules/auth/decorators/client.decorator';
 import { ApiAuthApiKey } from '@/shared/decorators/swagger-auth.decorators';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('Authentication')
+@ApiTags('Authentication', 'OTP')
 @ApiAuthApiKey()
 @UseApiKey()
-@Controller('auth')
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(private auth: AuthService) {}
 
@@ -39,20 +39,20 @@ export class AuthController {
 
   @ApiBody({ type: SendOtpDto })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @Post('send-otp')
+  @Post('otp/request')
   sendOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.identifier);
   }
 
   @ApiBody({ type: VerifyOtpDto })
   @Throttle({ default: { limit: 5, ttl: 300000 } })
-  @Post('verify-otp')
+  @Post('otp/verify')
   verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.auth.verifyOtp(dto);
   }
 
   @UseGuards(RefreshJwtGuard)
-  @Post('refresh')
+  @Post('token/refresh')
   refreshTokens(@User() user: AuthenticatedUser) {
     return this.auth.refreshTokens({
       sub: user.userId,
