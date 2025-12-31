@@ -41,8 +41,25 @@ async function bootstrap() {
     .setTitle('MunchSpace API')
     .setDescription('API documentation for MunchSpace application')
     .setVersion('v1')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'JWT Access Token',
+      },
+      'bearer-auth',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'x-api-key',
+        in: 'header',
+        description: 'API Key for client authentication',
+      },
+      'api-key',
+    )
     .addTag('api')
-    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

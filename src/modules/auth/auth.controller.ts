@@ -13,29 +13,38 @@ import type { AuthenticatedUser } from '@/modules/auth/types/authenticated-user.
 import type { ClientType } from '@/modules/auth/types/client-type.type';
 import { UseApiKey } from '@/shared/decorators/use-api-key.decorator';
 import { Client } from '@/modules/auth/decorators/client.decorator';
+import { ApiAuthApiKey } from '@/shared/decorators/swagger-auth.decorators';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Authentication')
+@ApiAuthApiKey()
 @UseApiKey()
 @Controller('auth')
 export class AuthController {
   constructor(private auth: AuthService) {}
 
+  @ApiBody({ type: SignupDto })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('signup')
   signup(@Body() dto: SignupDto, @Client() clientType: ClientType) {
     return this.auth.signup(dto, clientType);
   }
 
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiBody({ type: LoginDto })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto.email, dto.password);
   }
 
+  @ApiBody({ type: SendOtpDto })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('send-otp')
   sendOtp(@Body() dto: SendOtpDto) {
     return this.auth.sendOtp(dto.identifier);
   }
 
+  @ApiBody({ type: VerifyOtpDto })
   @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-otp')
   verifyOtp(@Body() dto: VerifyOtpDto) {

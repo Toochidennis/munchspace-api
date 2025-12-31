@@ -71,7 +71,6 @@ export class VendorService {
       await tx.businessProfile.create({
         data: {
           businessId: business.id,
-          logoUrl: dto.logoUrl || null,
           primaryPhone: dto.phone,
           supportEmail: dto.email,
           address: dto.address.streetName,
@@ -123,13 +122,13 @@ export class VendorService {
 
   private mapDayToNumber(day: string): number {
     const map: Record<string, number> = {
-      MON: 1,
-      TUE: 2,
-      WED: 3,
-      THU: 4,
-      FRI: 5,
-      SAT: 6,
-      SUN: 7,
+      MONDAY: 1,
+      TUESDAY: 2,
+      WEDNESDAY: 3,
+      THURSDAY: 4,
+      FRIDAY: 5,
+      SATURDAY: 6,
+      SUNDAY: 7,
     };
 
     return map[day.toUpperCase()] ?? 0;

@@ -13,6 +13,8 @@ import { Type } from 'class-transformer';
 import { WorkingHourDto } from '@/modules/vendors/vendor/dto/working-hour.dto';
 import { AddressDto } from '@/modules/vendors/vendor/dto/address.dto';
 import { BrandType, BusinessType, ServiceOperation } from '@prisma/client';
+import { Base64FileDto } from '@/shared/dto/file-upload.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBusinessDto {
   @IsString()
@@ -24,13 +26,14 @@ export class CreateBusinessDto {
   displayName: string;
 
   @IsOptional()
-  @IsString()
-  logoUrl?: string;
+  @ValidateNested()
+  @Type(() => Base64FileDto)
+  logo?: Base64FileDto;
 
   @IsEmail()
   email: string;
 
-  @IsPhoneNumber(undefined)
+  @IsPhoneNumber('NG')
   phone: string;
 
   @IsDateString()
@@ -40,7 +43,14 @@ export class CreateBusinessDto {
   @IsNotEmpty()
   description: string;
 
-  @IsEnum(BusinessType)
+  @ApiProperty({
+    enum: BusinessType,
+    enumName: 'BusinessType',
+    example: BusinessType.BAKERY,
+  })
+  @IsEnum(BusinessType, {
+    message: `businessType must be one of: ${Object.values(BusinessType).join(', ')}`,
+  })
   businessType: BusinessType;
 
   @IsEnum(BrandType)
@@ -57,8 +67,18 @@ export class CreateBusinessDto {
   @IsNotEmpty()
   taxId: string;
 
-  @IsArray()
-  @IsString({ each: true })
+  @ApiProperty({
+    enum: ServiceOperation,
+    description: `
+        DELIVERY: Orders are delivered to customers
+        PICKUP: Customers pick up orders themselves
+        DINE_IN: On-premise consumption
+        `,
+  })
+  @IsEnum(ServiceOperation, {
+    each: true,
+    message: `serviceOperations contains an invalid value`,
+  })
   serviceOperations: ServiceOperation[];
 
   @ValidateNested()
