@@ -106,6 +106,37 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
+  async logout(userId: string, refreshToken: string) {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        userId,
+        tokenHash: hashToken(refreshToken),
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+  }
+
+  async revokeRefreshToken(refreshToken: string) {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        tokenHash: hashToken(refreshToken),
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+  }
+
+  async revokeAll(userId: string) {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        userId,
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+  }
+
   async sendOtp(identifier: string) {
     const user = await this.findUserByEmailOrPhone(identifier);
     if (!user) throw new BadRequestException('User not found');
@@ -242,13 +273,41 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(payload: JwtPayload, refreshToekn: string) {
-    const hashedToken = hashToken(refreshToekn);
+  async refreshTokens(payload: JwtPayload, refreshToken: string) {
+    const tokenHash = hashToken(refreshToken);
 
-    const 
+    const stored = await this.prisma.client.refreshToken.findFirst({
+      where: {
+        userId: payload.sub,
+        tokenHash,
+        revoked: false,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!stored) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    await this.prisma.client.refreshToken.update({
+      where: { id: stored.id },
+      data: { revoked: true },
+    });
+
+    const accessToken = this.tokenUtil.generateAccessToken(payload);
+    const newRefreshToken = this.tokenUtil.generateRefreshToken(payload);
+
+    await this.prisma.client.refreshToken.create({
+      data: {
+        userId: payload.sub,
+        tokenHash: hashToken(newRefreshToken),
+        expiresAt: addDays(new Date(), 14),
+      },
+    });
+
     return {
-      accessToken: this.tokenUtil.generateAccessToken(payload),
-      refreshToken: this.tokenUtil.generateRefreshToken(payload),
+      accessToken: accessToken,
+      refreshToken: newRefreshToken,
     };
   }
 

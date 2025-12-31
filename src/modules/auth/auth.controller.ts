@@ -5,6 +5,7 @@ import {
   SendOtpDto,
   SignupDto,
   VerifyOtpDto,
+  RefreshTokenDto,
 } from '@/modules/auth/dto';
 import { AuthService } from '@/modules/auth/auth.service';
 import { User } from '@/modules/auth/decorators/user.decorator';
@@ -53,10 +54,28 @@ export class AuthController {
 
   @UseGuards(RefreshJwtGuard)
   @Post('token/refresh')
-  refreshTokens(@User() user: AuthenticatedUser) {
-    return this.auth.refreshTokens({
-      sub: user.userId,
-      capabilities: user.capabilities,
-    });
+  refreshTokens(@User() user: AuthenticatedUser, @Body() dto: RefreshTokenDto) {
+    return this.auth.refreshTokens(
+      {
+        sub: user.userId,
+        capabilities: user.capabilities,
+      },
+      dto.refreshToken,
+    );
+  }
+
+  @Post('logout')
+  logout(@Body() dto: RefreshTokenDto, @User() user: AuthenticatedUser) {
+    return this.auth.logout(user.userId, dto.refreshToken);
+  }
+
+  @Post('token/revoke')
+  revokeRefreshToken(@Body() dto: RefreshTokenDto) {
+    return this.auth.revokeRefreshToken(dto.refreshToken);
+  }
+
+  @Post('token/revoke/all')
+  revokeAllRefreshTokens(@User() user: AuthenticatedUser) {
+    return this.auth.revokeAll(user.userId);
   }
 }
