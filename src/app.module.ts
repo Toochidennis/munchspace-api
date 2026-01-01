@@ -17,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ProfileModule } from '@/modules/profile/profile.module';
 import { VendorModule } from '@/modules/vendors/vendor/vendor.module';
 import { MetaModule } from '@/modules/meta/meta.module';
+import { BusinessOnboardingModule } from '@/modules/vendors/businesses/business-onboarding.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MetaModule } from '@/modules/meta/meta.module';
     ProfileModule,
     VendorModule,
     MetaModule,
+    BusinessOnboardingModule,
   ],
   controllers: [AppController],
   providers: [

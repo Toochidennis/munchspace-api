@@ -9,7 +9,6 @@ import { TokenUtil } from '@/modules/auth/token.util';
 import { OtpService } from '@/shared/infra/otp/otp.service';
 import { PrismaService } from '@/shared/infra/prisma/prisma.service';
 import { AuthMethod, User } from '@prisma/client';
-import { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
 import { SignupDto, VerifyOtpDto } from '@/modules/auth/dto';
 import { ClientType } from '@/modules/auth/types/client-type.type';
 import { hashToken } from '@/modules/auth/token-hash.util';
@@ -94,43 +93,20 @@ export class AuthService {
     const user = await this.validatePasswordLogin(email, password);
 
     if (!user.isActive || user.isBlocked) {
-      console.log('Account disabled for user:', user.id);
       throw new UnauthorizedException('Account disabled');
     }
 
     if (user.authMethods.includes(AuthMethod.EMAIL_OTP)) {
-      console.log('User requires OTP verification:', user.id);
       return await this.dispatchOtp(user);
     }
 
     return this.issueTokens(user.id);
   }
 
-  async logout(userId: string, refreshToken: string) {
-    await this.prisma.client.refreshToken.updateMany({
-      where: {
-        userId,
-        tokenHash: hashToken(refreshToken),
-        revoked: false,
-      },
-      data: { revoked: true },
-    });
-  }
-
-  async revokeRefreshToken(refreshToken: string) {
+  async logout(refreshToken: string) {
     await this.prisma.client.refreshToken.updateMany({
       where: {
         tokenHash: hashToken(refreshToken),
-        revoked: false,
-      },
-      data: { revoked: true },
-    });
-  }
-
-  async revokeAll(userId: string) {
-    await this.prisma.client.refreshToken.updateMany({
-      where: {
-        userId,
         revoked: false,
       },
       data: { revoked: true },
@@ -273,12 +249,11 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(payload: JwtPayload, refreshToken: string) {
+  async refreshToken(refreshToken: string) {
     const tokenHash = hashToken(refreshToken);
 
     const stored = await this.prisma.client.refreshToken.findFirst({
       where: {
-        userId: payload.sub,
         tokenHash,
         revoked: false,
         expiresAt: { gt: new Date() },
@@ -294,21 +269,36 @@ export class AuthService {
       data: { revoked: true },
     });
 
-    const accessToken = this.tokenUtil.generateAccessToken(payload);
-    const newRefreshToken = this.tokenUtil.generateRefreshToken(payload);
+    return this.issueTokens(stored.userId);
+  }
 
-    await this.prisma.client.refreshToken.create({
-      data: {
-        userId: payload.sub,
-        tokenHash: hashToken(newRefreshToken),
-        expiresAt: addDays(new Date(), 14),
+  async revokeRefreshToken(refreshToken: string) {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        tokenHash: hashToken(refreshToken),
+        revoked: false,
       },
+      data: { revoked: true },
     });
+  }
 
-    return {
-      accessToken: accessToken,
-      refreshToken: newRefreshToken,
-    };
+  async revokeAllTokens() {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+  }
+
+  async revokeAllTokensByUser(userId: string) {
+    await this.prisma.client.refreshToken.updateMany({
+      where: {
+        userId,
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
   }
 
   async findUserByEmailOrPhone(identifier: string) {
@@ -327,6 +317,7 @@ export class AuthService {
       capabilities,
     };
 
+    const accessToken = this.tokenUtil.generateAccessToken(payload);
     const refreshToken = this.tokenUtil.generateRefreshToken(payload);
 
     await this.prisma.client.refreshToken.create({
@@ -338,7 +329,7 @@ export class AuthService {
     });
 
     return {
-      accessToken: this.tokenUtil.generateAccessToken(payload),
+      accessToken: accessToken,
       refreshToken: refreshToken,
     };
   }

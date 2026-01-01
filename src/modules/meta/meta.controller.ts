@@ -5,7 +5,7 @@ import { UseApiKey } from '@/shared/decorators/use-api-key.decorator';
 
 @ApiTags('Meta')
 @UseApiKey()
-@Controller('meta')
+@Controller({ path: 'meta', version: '1' })
 export class MetaController {
   constructor(private readonly metaService: MetaService) {}
 
