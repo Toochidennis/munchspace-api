@@ -8,6 +8,7 @@ import {
 import { CreateBusinessDto } from '@/modules/vendors/vendor/dto/create-business.dto';
 import { OnBoardingStage, VendorRole, AvailabilityType } from '@prisma/client';
 import slugify from 'slugify';
+import { VendorOnboardingDto } from './dto/vendor-onboarding.dto';
 
 @Injectable()
 export class VendorService {
@@ -132,5 +133,63 @@ export class VendorService {
     };
 
     return map[day.toUpperCase()] ?? 0;
+  }
+
+  async getMyOnboarding(userId: string): Promise<VendorOnboardingDto> {
+    const vendor = await this.prisma.client.vendor.findUnique({
+      where: { userId },
+      include: {
+        documents: true,
+        financials: true,
+        businesses: { select: { id: true } },
+      },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    const pending: string[] = [];
+
+    const kycCompleted =
+      vendor.documents.length > 0 &&
+      vendor.documents.every((d) => d.status === 'APPROVED');
+
+    if (!kycCompleted) pending.push('Vendor KYC not completed');
+
+    const bankAccountSet = !!vendor.financials;
+    if (!bankAccountSet) pending.push('Settlement bank account not set');
+
+    const hasBusiness = vendor.businesses.length > 0;
+    if (!hasBusiness) pending.push('No business created');
+
+    return {
+      vendorId: vendor.id,
+      kycCompleted,
+      bankAccountSet,
+      hasBusiness,
+      pending,
+      isReady: pending.length === 0,
+    };
+  }
+
+  async getMyBusinesses(userId: string) {
+    const vendor = await this.prisma.client.vendor.findUnique({
+      where: { userId },
+      select: {
+        businesses: {
+          select: {
+            id: true,
+            displayName: true,
+            status: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!vendor) throw new NotFoundException('Vendor not found');
+
+    return vendor.businesses;
   }
 }
