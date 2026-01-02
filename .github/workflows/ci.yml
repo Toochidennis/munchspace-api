@@ -26,5 +26,5 @@ jobs:
         run: |
           IMAGE_TAG=${GITHUB_SHA}
           docker build -t munchspace-api:$IMAGE_TAG .
-          docker tag munchspace-api:$IMAGE_TAG 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace/munchspace-api:$IMAGE_TAG
-          docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace/munchspace-api:$IMAGE_TAG
+          docker tag munchspace-api:$IMAGE_TAG 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
+          docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
