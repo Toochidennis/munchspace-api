@@ -1,6 +1,6 @@
 services:
   api:
-    image: 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:${IMAGE_TAG}
+    image: 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:85369a5fe3ef8a922b2781619ce214f330feb8d3
     environment:
       NODE_ENV: production
     env_file:
