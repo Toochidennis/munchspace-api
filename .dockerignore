@@ -2,6 +2,7 @@ node_modules
 dist
 .env.local
 .env.production
+.env.development
 .DS_Store
 .gitignore
 .git
