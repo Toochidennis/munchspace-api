@@ -25,6 +25,29 @@ jobs:
       - name: Build and push Docker image
         run: |
           IMAGE_TAG=${GITHUB_SHA}
+
+          # build immutable image
           docker build -t munchspace-api:$IMAGE_TAG .
-          docker tag munchspace-api:$IMAGE_TAG 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
+
+          # tag immutable SHA
+          docker tag munchspace-api:$IMAGE_TAG \
+            590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
+
+          # tag moving prod alias
+          docker tag munchspace-api:$IMAGE_TAG \
+            590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
+
+          # push both
           docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
+          docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/munchspace
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d

@@ -10,8 +10,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
+      # redis:
+      #   condition: service_started
     volumes:
       - .:/app
       - /app/node_modules
@@ -49,12 +49,12 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: munchspace-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: munchspace-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
 
 volumes:
   pg_data:

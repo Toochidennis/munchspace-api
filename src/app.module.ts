@@ -18,6 +18,7 @@ import { ProfileModule } from '@/modules/profile/profile.module';
 import { VendorModule } from '@/modules/vendors/vendor/vendor.module';
 import { MetaModule } from '@/modules/meta/meta.module';
 import { BusinessOnboardingModule } from '@/modules/vendors/businesses/business-onboarding.module';
+import { HealthModule } from '@/modules/health/health.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { BusinessOnboardingModule } from '@/modules/vendors/businesses/business-
     ]),
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.development', '.env.local', '.env'],
       validate: (env) => {
         if (!env.JWT_SECRET) {
           throw new Error('JWT_SECRET is missing');
@@ -46,6 +48,7 @@ import { BusinessOnboardingModule } from '@/modules/vendors/businesses/business-
     VendorModule,
     MetaModule,
     BusinessOnboardingModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
