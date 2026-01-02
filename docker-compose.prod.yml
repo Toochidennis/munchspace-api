@@ -3,6 +3,7 @@ services:
     image: 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
     environment:
       NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
     env_file:
       - .env.production
     ports:
