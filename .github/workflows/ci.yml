@@ -51,7 +51,7 @@ jobs:
             --parameters "commands=[
               \"whoami\",
               \"docker --version\",
-              \"docker compose version\",
+              \"docker compose version || true\",
               ]" \
             --query "Command.CommandId" \
             --output text)
