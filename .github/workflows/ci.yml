@@ -48,6 +48,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy MunchSpace API" \
+            --cloud-watch-output-config '{"CloudWatchOutputEnabled":false}' \
             --parameters "commands=[
               \"cd /opt/munchspace\",
               \"docker compose pull api\",
