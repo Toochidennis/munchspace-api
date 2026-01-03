@@ -15,6 +15,7 @@ COPY . .
 
 ARG DATABASE_URL=postgresql://user:pass@localhost:5432/dummy
 ENV DATABASE_URL=$DATABASE_URL
+ENV PRISMA_CONFIG=prisma.config.ts
 
 RUN npx prisma generate
 RUN npm run build

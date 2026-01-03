@@ -41,17 +41,17 @@ jobs:
           docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
           docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
 
-      # - name: Deploy to EC2
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.EC2_HOST }}
-      #     username: ${{ secrets.EC2_USER }}
-      #     key: ${{ secrets.EC2_SSH_KEY }}
-      #     script: |
-      #       cd /opt/munchspace
-      #       docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-      #       docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-      #       run --rm api printenv | grep DATABASE_URL
-      #       docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-      #       run --rm api npx prisma migrate deploy
-      #       docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/munchspace
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+            run --rm api printenv | grep DATABASE_URL
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+            run --rm api 
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
