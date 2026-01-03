@@ -31,7 +31,9 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY package*.json ./
+COPY entrypoint.sh  /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
 
-CMD [ "node", "-r", "tsconfig-paths/register", "dist/src/main.js" ]
+CMD [ "/app/entrypoint.sh" ]
