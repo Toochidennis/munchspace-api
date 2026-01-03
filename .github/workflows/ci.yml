@@ -49,10 +49,12 @@ jobs:
             --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy MunchSpace API" \
             --parameters "commands=[
-              \"whoami\",
-              \"docker --version\",
-              \"docker compose version || true\",
-              ]" \
+              \"cd /opt/munchspace\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
+              \"sleep 5\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api npx prisma migrate deploy\"
+            ]" \
             --query "Command.CommandId" \
             --output text)
 
