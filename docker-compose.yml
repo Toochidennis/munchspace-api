@@ -1,6 +1,8 @@
 services:
   api:
     image: munchspace-api
+    environment:
+      - DATABASE_URL: postgresql://postgres:postgres@postgres:5432/munchspace
     container_name: munchspace-api
     restart: unless-stopped
     ports:
