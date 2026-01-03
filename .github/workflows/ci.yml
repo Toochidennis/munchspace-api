@@ -51,9 +51,7 @@ jobs:
             --parameters "commands=[
               \"cd /opt/munchspace\",
               \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
-              \"sleep 5\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api npx prisma migrate deploy\"
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\"
             ]" \
             --query "Command.CommandId" \
             --output text)
