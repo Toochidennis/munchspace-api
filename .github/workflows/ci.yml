@@ -49,11 +49,9 @@ jobs:
             --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy MunchSpace API" \
             --parameters "commands=[
-                \"whoami\",
-                \"pwd\",
-                \"ls -la /\",
-                \"ls -la /opt || true\",
-                \"ls -la /opt/munchspace || true\"
+              \"docker --version\",
+              \"docker compose version || true\",
+              \"docker-compose version || true\"
               ]" \
             --query "Command.CommandId" \
             --output text)
