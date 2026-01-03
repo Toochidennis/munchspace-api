@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: production
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -26,32 +30,37 @@ jobs:
         run: |
           IMAGE_TAG=${GITHUB_SHA}
 
-          # build immutable image
           docker build -t munchspace-api:$IMAGE_TAG .
 
-          # tag immutable SHA
           docker tag munchspace-api:$IMAGE_TAG \
             590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
 
-          # tag moving prod alias
           docker tag munchspace-api:$IMAGE_TAG \
             590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
 
-          # push both
           docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:$IMAGE_TAG
           docker push 590200200492.dkr.ecr.us-east-1.amazonaws.com/munchspace-api:prod
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /opt/munchspace
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-            run --rm api printenv | grep DATABASE_URL
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-            run --rm api 
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+      - name: Deploy via SSM
+        id: deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+            --comment "Deploy MunchSpace API" \
+            --parameters "commands=[
+              \"cd /opt/munchspace\",
+              \"docker compose pull api\",
+              \"docker compose up -d api\",
+              \"docker compose exec -T api npx prisma migrate deploy\"
+            ]" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+
+      - name: Wait for deploy
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
