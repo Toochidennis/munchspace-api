@@ -48,15 +48,13 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy MunchSpace API" \
-            --cloud-watch-output-config '{"CloudWatchOutputEnabled":true}' \
             --parameters "commands=[
-              \"ls -ld /opt/munchspace\",
-              \"cd /opt/munchspace\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
-              \"sleep 5\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api npx prisma migrate deploy\"
-            ]" \
+                \"whoami\",
+                \"pwd\",
+                \"ls -la /\",
+                \"ls -la /opt || true\",
+                \"ls -la /opt/munchspace || true\"
+              ]" \
             --query "Command.CommandId" \
             --output text)
 
