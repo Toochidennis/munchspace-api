@@ -14,8 +14,7 @@ FROM deps AS build
 COPY . .
 
 ARG DATABASE_URL=postgresql://user:pass@localhost:5432/dummy
-ENV DATABASE_URL=$DATABASE_URL
-ENV PRISMA_CONFIG=prisma.config.ts
+ENV PRISMA_CONFIG=/app/prisma.config.ts
 
 RUN npx prisma generate
 RUN npm run build
@@ -30,8 +29,10 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY package*.json ./
 COPY entrypoint.sh  /app/entrypoint.sh
+
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
