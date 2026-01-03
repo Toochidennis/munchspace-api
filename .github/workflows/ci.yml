@@ -48,9 +48,9 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy MunchSpace API" \
-            --cloud-watch-output-config '{"CloudWatchOutputEnabled":false}' \
+            --cloud-watch-output-config '{"CloudWatchOutputEnabled":true}' \
             --parameters "commands=[
-              \"set -euxo pipefail\",
+              \"ls -ld /opt/munchspace\",
               \"cd /opt/munchspace\",
               \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
               \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
