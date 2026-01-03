@@ -66,8 +66,8 @@ jobs:
             --command-id ${{ steps.deploy.outputs.command_id }} \
             --instance-id ${{ secrets.EC2_INSTANCE_ID }}
 
-      - name: Get deploy result
-        run: |
-          aws ssm get-command-invocation \
-            --command-id ${{ steps.deploy.outputs.command_id }} \
-            --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+      # - name: Get deploy result
+      #   run: |
+      #     aws ssm get-command-invocation \
+      #       --command-id ${{ steps.deploy.outputs.command_id }} \
+      #       --instance-id ${{ secrets.EC2_INSTANCE_ID }}

@@ -5,5 +5,39 @@ services:
       NODE_ENV: production
     env_file:
       - .env.production
+    restart: unless-stopped
     ports:
       - "3000:3000"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: munchspace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: munchspace
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d munchspace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: munchspace-pgadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@munchspace.io
+      PGADMIN_DEFAULT_PASSWORD: Munch@Space123
+    depends_on:
+      - postgres
+
+volumes:
+    pg_data:
