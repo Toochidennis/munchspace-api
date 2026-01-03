@@ -51,8 +51,8 @@ jobs:
             --cloud-watch-output-config '{"CloudWatchOutputEnabled":false}' \
             --parameters "commands=[
               \"cd /opt/munchspace\",
-              \"docker compose pull api\",
-              \"docker compose up -d api\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
               \"docker compose exec -T api npx prisma migrate deploy\"
             ]" \
             --query "Command.CommandId" \
