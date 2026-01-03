@@ -50,9 +50,11 @@ jobs:
             --comment "Deploy MunchSpace API" \
             --cloud-watch-output-config '{"CloudWatchOutputEnabled":false}' \
             --parameters "commands=[
+              \"set -euxo pipefail\",
               \"cd /opt/munchspace\",
               \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
               \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\",
+              \"sleep 5\",
               \"docker compose exec -T api npx prisma migrate deploy\"
             ]" \
             --query "Command.CommandId" \
