@@ -52,8 +52,8 @@ jobs:
               \"aws ecr get-login-password --region us-east-1 \
                 | docker login --username AWS --password-stdin 590200200492.dkr.ecr.us-east-1.amazonaws.com\",
               \"cd /opt/munchspace\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull || true\",
-              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d || true\"
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull\",
+              \"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d\"
             ]" \
             --query "Command.CommandId" \
             --output text)

@@ -16,7 +16,8 @@ services:
       - .:/app
       - /app/node_modules
     command: >
-      sh -c "npx prisma generate &&
+      sh -c "npm install &&
+             npx prisma generate &&
              npx prisma migrate dev &&
              npm run start:dev"
     develop:
