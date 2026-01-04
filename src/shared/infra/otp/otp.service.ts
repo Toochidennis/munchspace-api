@@ -37,11 +37,11 @@ export class OtpService {
     const message = `Your MunchSpace verification code is ${otp}. Expires in 5 minutes.`;
     console.log(message);
 
-    // await this.sender.sendOtp({
-    //   channel: input.channel,
-    //   destination: input.destination,
-    //   message,
-    // });
+    await this.sender.sendOtp({
+      channel: input.channel,
+      destination: input.destination,
+      message,
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('[DEV OTP]', otp, '→', input.destination);
